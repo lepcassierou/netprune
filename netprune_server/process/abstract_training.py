@@ -6,10 +6,10 @@ from tensorflow.python.keras import callbacks as callbacks_module
 
 class AbstractTraining(ABC):
     @abstractmethod
-    def __init__(self, dataset_name='mnist', model_name='vgg16', epochs=10, batch_size=128, shuffle_buffer_size=1024, val_split_ratio=0.1, optimizer_name='Nadam', loss_name = 'CategoricalCrossentropy', metric_name='CategoricalAccuracy'):
+    def __init__(self, dataset_name='mnist', model_name='vgg16', epochs=10, batch_size=128, val_split_ratio=0.1, optimizer_name='Nadam', loss_name = 'CategoricalCrossentropy', metric_name='CategoricalAccuracy'):
         super().__init__()
         self.gpu_setup()
-        self.init_parameters(dataset_name, model_name, epochs, batch_size, shuffle_buffer_size, val_split_ratio, optimizer_name, loss_name, metric_name)
+        self.init_parameters(dataset_name, model_name, epochs, batch_size, val_split_ratio, optimizer_name, loss_name, metric_name)
                 
         
     def gpu_setup(self,):
@@ -19,18 +19,17 @@ class AbstractTraining(ABC):
                 tf.config.experimental.set_memory_growth(dev, True)
                 
                 
-    def init_parameters(self, dataset_name, model_name, epochs, batch_size, shuffle_buffer_size, val_split_ratio, optimizer_name, loss_name, metric_name):
+    def init_parameters(self, dataset_name, model_name, epochs, batch_size, val_split_ratio, optimizer_name, loss_name, metric_name):
         self.dataset_name = dataset_name
         self.model_name = model_name
         self.epochs = epochs
         self.batch_size = batch_size
-        self.shuffle_buffer_size = shuffle_buffer_size
         self.val_split_ratio = val_split_ratio
         self.optimizer_name = optimizer_name
         self.loss_name = loss_name
         self.metric_name = metric_name
         
-        self.datasets = ['boston_housing', 'cifar100', 'imdb', 'reuters', 'cifar10', 'fashion_mnist', 'mnist', 'cats_vs_dogs']
+        self.datasets = ['cifar10', 'fashion_mnist', 'mnist', 'cats_vs_dogs']
         self.models = ['lenet5', 'lenet300-100', 'lenet_4_variant', 'vgg16', 'vgg16_cifar', 'vgg16_cifar_2fc', 'vgg19', 'two-layer', 'cvsd_conv', 'resnet50']
         self.optimizers = ['Adadelta', 'Adagrad', 'Adam', 'Adamax', 'Ftrl', 'Nadam', 'Optimizer', 'RMSprop', 'SGD']
         self.losses = ['BinaryCrossentropy', 'CategoricalCrossentropy', 'CategoricalHinge', 'CosineSimilarity', 'Hinge', 'Huber', 'KLD', 'KLDivergence', 'LogCosh', 'Loss', 'MAE', 'MAPE', 'MSE', 'MSLE', 'MeanAbsoluteError', 'MeanAbsolutePercentageError', 'MeanSquaredError', 'MeanSquaredLogarithmicError', 'Poisson', 'Reduction', 'SparseCategoricalCrossentropy', 'SquaredHinge']
@@ -141,7 +140,7 @@ class AbstractTraining(ABC):
         self.model.save(filename)
         
         
-    def save_config(self):
+    def __get_config_nodes__(self):
         layers = []
         for layer in self.model.layers:
             tmp = layer.get_config()
@@ -150,6 +149,10 @@ class AbstractTraining(ABC):
             tmp['params'] = layer.count_params()
             tmp['type'] = str(type(layer)).split('.')[-1][:-2]
             layers.append(tmp)
+        return layers
+        
+        
+    def __get_config_edges__(self):
         config = self.model.get_config()
         relations = []
         for layer in config['layers']:
@@ -159,13 +162,19 @@ class AbstractTraining(ABC):
                         for ssi_node in si_node:
                             if ssi_node != 0 and ssi_node != {}:
                                 relations.append({'source': ssi_node, 'target': layer['name']})
-        return layers, relations
+        return relations
+    
+    
+    def save_config(self):
+        layers = self.__get_config_nodes__()
+        edges = self.__get_config_edges__()
+        return layers, edges
     
     
         
     ####### Load #######
     @abstractmethod
-    def load_dataset(self, ):
+    def load_dataset(self, dataset_name='', model_name='', batch_size=0, to_pad, augment_data=False, seed=0):
         pass
     
     
@@ -212,7 +221,7 @@ class AbstractTraining(ABC):
     
     ####### Others #######
     @abstractmethod
-    def split_dataset_into_two_splits(self, ):
+    def cut_eval_dataset(self, dataset_x, dataset_y, nb_classes, to_pad, model_name='', test_set_split_ratio=.166):
         pass
     
     

@@ -90,7 +90,24 @@ class ScenarioHandler(AbstractHandler):
         size_gain = os.stat(model_path).st_size
         self.info.update_model_flops(scenario_id, size_gain, flops)
         
+    
+    def __compute_activations__(self, training_obj, dataset_name, model_graph):
+        Activations = self.lazy.lazy_typing_activations(dataset_name)
+        model = training_obj.get_curr_model()
+        loss = training_obj.get_loss()
+        optimizer = training_obj.get_optimizer()
+        metric = training_obj.get_metric()
+        test_set = training_obj.get_test_set()
         
+        activations = Activations(model, model_graph, loss, optimizer, metric, test_set)
+        # conf_matrix, indices_images = compute_activations_stats(mongo, tr.get_current_model(), params['scenario_id'], tmp_scen['instanceId'], activations, tr.get_nb_classes(), tr.get_current_test_dataset(), dataset_name=dataset_name)
+        # mongo.push_scenario_value(params['scenario_id'], "confusionMatrix", conf_matrix)
+        # mongo.push_scenario_value(params['scenario_id'], "indicesImages", indices_images)
+        # nodes_list, edges_list = model_graph.remove_activation_layers_from_model_graph()
+        # mongo.set_scenario_value(params['scenario_id'], 'layerNodes', nodes_list)
+        # mongo.set_scenario_value(params['scenario_id'], 'layerEdges', edges_list)
+    
+    
     def scenario_init(self, params):
         """ Compute statistics of filters based on their activation maps 
             Parameters:
@@ -121,6 +138,7 @@ class ScenarioHandler(AbstractHandler):
         
         self.__compute_flops__(tr, params['scenario_id'], model_path)
         
+        self.__compute_activations__(tr, dataset_name, model_graph)
         
         
         

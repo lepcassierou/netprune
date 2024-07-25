@@ -32,4 +32,4 @@ class LazyTyping():
     def lazy_typing_activations(self, dataset_name):
         if dataset_name == "cats_vs_dogs":
             return ActivationsCatsDogs
-        return Activations
+        return ActivationsDefault

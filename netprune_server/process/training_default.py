@@ -208,7 +208,14 @@ class TrainingDefault(AbstractTraining):
             return self.train_dataset
     
     
-    def train(self, train_checkpoint, test_checkpoint, checkpoint_file_path):
+    def train(self, train_checkpoint = None, test_checkpoint = None, checkpoint_file_path = None):
+        if train_checkpoint is None:
+            self.console_info.train_fct_incorrect()
+        if test_checkpoint is None:
+            self.console_info.test_fct_incorrect()
+        if checkpoint_file_path is None:
+            self.console_info.file_path_incorrect()
+            
         self.active_callbacks.on_train_begin()
         step_total = len(self.x_train)*(1-self.val_split_ratio)
         step_mod = (step_total/self.batch_size)/10

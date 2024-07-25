@@ -42,3 +42,15 @@ class ConsoleInformation():
             print(f"{bcolors.OKGREEN}{str_epoch}{bcolors.ENDC}")
         else:
             print(f"{bcolors.FAIL}{str_epoch}{bcolors.ENDC}")
+            
+            
+    def train_fct_incorrect(self):
+        print("train_checkpoint is not a function")
+            
+            
+    def test_fct_incorrect(self):
+        print("test_checkpoint is not a function")
+            
+            
+    def file_path_incorrect(self):
+        print("checkpoint_file_path is None")

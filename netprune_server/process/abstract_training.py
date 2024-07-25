@@ -174,7 +174,7 @@ class AbstractTraining(ABC):
         
     ####### Load #######
     @abstractmethod
-    def load_dataset(self, dataset_name='', model_name='', batch_size=0, to_pad, augment_data=False, seed=0):
+    def load_dataset(self, dataset_name='', model_name='', batch_size=0, to_pad=False, augment_data=False, seed=0):
         pass
     
     
@@ -209,7 +209,7 @@ class AbstractTraining(ABC):
         
     def load_callbacks(self,):
         verbose = 1
-        self.set_callbacks(None)
+        self.set_callbacks()
         self.active_callbacks = callbacks_module.CallbackList(self.callbacks, add_history=True, model=self.model, verbose=verbose, epochs=self.epochs)
         
     
@@ -236,7 +236,7 @@ class AbstractTraining(ABC):
     
     
     @abstractmethod
-    def train(self,):
+    def train(self, train_checkpoint = None, test_checkpoint = None, checkpoint_file_path = None):
         pass
     
     

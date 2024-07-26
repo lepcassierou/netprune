@@ -3,6 +3,7 @@ import bson
 import configparser
 import datetime
 
+
 config = configparser.ConfigParser()
 config.read("config.ini")
 

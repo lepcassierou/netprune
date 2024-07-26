@@ -34,10 +34,25 @@ class Information():
     def update_model_flops(self, scenario_id, size_gain, flops):
         self.mongo.set_scenario_value(scenario_id, 'sizeGain', size_gain)
         self.mongo.set_scenario_value(scenario_id, 'flops', flops)
+    
+    
+    def update_layer_nodes_edges(self, scenario_id, nodes, edges):
+        self.mongo.set_scenario_value(scenario_id, 'layerNodes', nodes)
+        self.mongo.set_scenario_value(scenario_id, 'layerEdges', edges)
         
         
-    def set_status_ready(self, instance_id):
+    def push_confusion(self, scenario_id, conf_matrix, img_ind_matrix):
+        self.mongo.push_scenario_value(scenario_id, "confusionMatrix", conf_matrix)
+        self.mongo.push_scenario_value(scenario_id, "indicesImages", img_ind_matrix)
+        
+        
+    def set_instance_status_ready(self, instance_id):
         self.mongo.set_instance_value(instance_id, 'status', 'ready')
+        
+        
+    def set_scenario_status_ready(self, scenario_id):
+        self.mongo.set_scenario_value(scenario_id, 'status', 'ready')
+        self.mongo.set_scenario_value(scenario_id, 'message', '')
         
         
     ######################################

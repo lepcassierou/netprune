@@ -1,11 +1,8 @@
-from training_default import TrainingDefault
-from training_cats_dogs import *
-from fine_tuning_default import *
-from fine_tuning_cats_dogs import *
-from activations_default import *
-from activations_cats_dogs import *
-from statistics_default import *
-from statistics_cats_dogs import *
+from process.activations_default import *
+# from process.fine_tuning_default import *
+from process.statistics_default import *
+from process.training_default import TrainingDefault
+
 
 class LazyTyping():
     def __init__(self) -> None:
@@ -26,10 +23,10 @@ class LazyTyping():
     def lazy_typing_stats(self, dataset_name):
         if dataset_name == "cats_vs_dogs":
             return StatisticsCatsDogs
-        return Statistics
+        return StatisticsDefault
         
         
     def lazy_typing_activations(self, dataset_name):
         if dataset_name == "cats_vs_dogs":
             return ActivationsCatsDogs
-        return Activations
+        return ActivationsDefault

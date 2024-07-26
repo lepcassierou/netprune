@@ -1,5 +1,6 @@
 import os
-from abstract_handler import AbstractHandler
+from handler.abstract_handler import AbstractHandler
+
 
 class InstanceHandler(AbstractHandler):
     def __init__(self) -> None:

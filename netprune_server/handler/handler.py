@@ -1,11 +1,11 @@
-from connector.mongo_connector import Mongo
-import instance_handler
-import scenario_handler
+from handler.instance_handler import InstanceHandler
+from handler.scenario_handler import ScenarioHandler
+
 
 class Handler():
     def __init__(self) -> None:
-        self.i = instance_handler.InstanceHandler()
-        self.s = scenario_handler.ScenarioHandler()
+        self.i = InstanceHandler()
+        self.s = ScenarioHandler()
     
     
     def instance_deletion(self, params):

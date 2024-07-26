@@ -1,12 +1,16 @@
+import gc
 import os
 import shutil
 
 from connector.mongo_connector import Mongo
-from abstract_handler import AbstractHandler
-from information import Information
+from handler.abstract_handler import AbstractHandler
+from handler.information import Information
+from handler.db_layer_name import LayerName2DBName, DBName2LayerName, StatsSaver
+from process.confusion_matrix import ConfusionMatrix
 from process.lazy_typing import LazyTyping
 from process.model_graph import ModelGraph
 from process.train_test_checkpoints import TrainCheckpoint, TestCheckpoint
+
 
 class ScenarioHandler(AbstractHandler):
     def __init__(self) -> None:
@@ -18,7 +22,7 @@ class ScenarioHandler(AbstractHandler):
         self.info.loading_dataset(scenario_id)
         training_obj.load_dataset(seed=instance_id)
         self.info.loading_model(scenario_id)
-        training_obj.load_model()
+        training_obj.load_architecture()
         self.info.preparing_model(scenario_id)
         training_obj.load_optimizer()
         training_obj.load_loss()
@@ -81,7 +85,7 @@ class ScenarioHandler(AbstractHandler):
     def __training_interrupted__(self, mongo, tmp_instance_id, scenario_id, tmp_instance_status):
         mongo.pull_instance_value(tmp_instance_id, 'statusQueue', scenario_id)
         if len(tmp_instance_status) == 1:
-            self.info.set_status_ready(tmp_instance_id)
+            self.info.set_instance_status_ready(tmp_instance_id)
         return self.default_response()
     
     
@@ -91,21 +95,59 @@ class ScenarioHandler(AbstractHandler):
         self.info.update_model_flops(scenario_id, size_gain, flops)
         
     
-    def __compute_activations__(self, training_obj, dataset_name, model_graph):
+    def __compute_activations_stats__(self, mongo, model, scenario_id, instance_id, activations, nb_classes, test_dataset, dataset_name=None):
+        """ Compute statistics of filters based on their activation maps 
+            Parameters:
+                mongo (any): database object
+                model (tf-keras Model): model that has been trained
+                scenario_id (string): id of scenario
+                instance_id (string): id of instance
+                activations (ndarray): normalized activation maps per layer
+                nb_classes (int): number of classes
+                test_dataset (ndarray): test dataset
+
+            Returns:
+                List, List : confusion matrix, images indices that belong to each cell of confusion matrix 
+        """
+        # Extract and normalize activations per filter
+        db_layers = mongo.get_layers_by_scenario_id(scenario_id)
+        ln2db = LayerName2DBName(db_layers)
+        db2ln = DBName2LayerName(mongo)
+        stats_saver = StatsSaver(mongo)
+        
+        repository = f"models/{instance_id}/{scenario_id}/"
+
+        # Compute statistics
+        activations.compute_normalized_activations(repository, ln2db.get_db_name_from_layername)
+
+        Statistics = self.lazy.lazy_typing_stats(dataset_name=dataset_name)
+        stats = Statistics(model, repository, nb_classes, test_dataset)
+        stats.statistics_from_normalized_data(db2ln.get_layername_from_db_name, stats_saver.save_statistics_to_db)
+
+        cm = ConfusionMatrix(nb_classes)
+        confusion_matrix, confusion_images = cm.compute_confusion_matrices(activations)
+        return confusion_matrix, confusion_images
+    
+    
+    def __compute_activations__(self, mongo, training_obj, dataset_name, model_graph, scenario_id, tmp_instance_id):
         Activations = self.lazy.lazy_typing_activations(dataset_name)
         model = training_obj.get_curr_model()
         loss = training_obj.get_loss()
         optimizer = training_obj.get_optimizer()
         metric = training_obj.get_metric()
         test_set = training_obj.get_test_set()
+        nb_classes = training_obj.get_nb_classes()
         
         activations = Activations(model, model_graph, loss, optimizer, metric, test_set)
-        # conf_matrix, indices_images = compute_activations_stats(mongo, tr.get_current_model(), params['scenario_id'], tmp_scen['instanceId'], activations, tr.get_nb_classes(), tr.get_current_test_dataset(), dataset_name=dataset_name)
-        # mongo.push_scenario_value(params['scenario_id'], "confusionMatrix", conf_matrix)
-        # mongo.push_scenario_value(params['scenario_id'], "indicesImages", indices_images)
-        # nodes_list, edges_list = model_graph.remove_activation_layers_from_model_graph()
-        # mongo.set_scenario_value(params['scenario_id'], 'layerNodes', nodes_list)
-        # mongo.set_scenario_value(params['scenario_id'], 'layerEdges', edges_list)
+        conf_matrix, indices_images = self.__compute_activations_stats__(mongo, model, scenario_id, tmp_instance_id, activations, nb_classes, test_set, dataset_name=dataset_name)
+        
+        self.info.push_confusion(scenario_id, conf_matrix, indices_images)
+        del activations
+        
+    
+    def __remove_activation_layers__(self, model_graph, scenario_id):
+        nodes_list, edges_list = model_graph.remove_activation_layers_from_model_graph()
+        self.info.update_layer_nodes_edges(scenario_id, nodes_list, edges_list)
     
     
     def scenario_init(self, params):
@@ -118,168 +160,43 @@ class ScenarioHandler(AbstractHandler):
         mongo = Mongo()
         self.info = Information(mongo)
         
-        tmp_scen = mongo.get_scenario(params['scenario_id'])
-        tmp_inst = mongo.get_instance(tmp_scen['instanceId'])
-        self.info.init_progress(params['scenario_id'])
+        scenario_id = params['scenario_id']
+        tmp_scen = mongo.get_scenario(scenario_id)
+        tmp_instance_id = tmp_scen['instanceId']
+        tmp_inst = mongo.get_instance(tmp_instance_id)
+        self.info.init_progress(scenario_id)
         
         dataset_name = tmp_inst['datasetName']
         Training = self.lazy.lazy_typing_training(dataset_name)
         tr = Training(dataset_name=dataset_name, model_name=tmp_inst['modelName'], epochs=tmp_inst['epochs'], batch_size=tmp_inst['batchSize'], val_split_ratio=tmp_inst['validationSplitRatio'], optimizer_name=tmp_inst['optimizerName'], loss_name=tmp_inst['lossName'], metric_name=tmp_inst['metricName'])
         
-        self.__load__(tr, tmp_inst['_id'], params['scenario_id'])
-        is_training_finished, model_path = self.__train_model__(mongo, tr, params['scenario_id'], tmp_scen['instanceId'], tmp_scen['_id'], tmp_inst['epochs'])
+        self.__load__(tr, tmp_inst['_id'], scenario_id)
+        is_training_finished, model_path = self.__train_model__(mongo, tr, scenario_id, tmp_instance_id, tmp_scen['_id'], tmp_inst['epochs'])
         
-        self.__evaluate_model_test__(tr, model_path, params['scenario_id'])
+        self.__evaluate_model_test__(tr, model_path, scenario_id)
         
-        model_graph = self.__extract_model_graph__(mongo, tr, params['scenario_id'], tmp_scen['instanceId'], tmp_scen['_id'], tmp_scen['userId'])
+        model_graph = self.__extract_model_graph__(mongo, tr, scenario_id, tmp_instance_id, tmp_scen['_id'], tmp_scen['userId'])
         
         if not is_training_finished:
-            return self.__training_interrupted__(mongo, tmp_scen['instanceId'], params['scenario_id'], tmp_inst['statusQueue'])
+            return self.__training_interrupted__(mongo, tmp_instance_id, scenario_id, tmp_inst['statusQueue'])
         
-        self.__compute_flops__(tr, params['scenario_id'], model_path)
+        self.__compute_flops__(tr, scenario_id, model_path)
         
-        self.__compute_activations__(tr, dataset_name, model_graph)
+        self.__compute_activations__(mongo, tr, dataset_name, model_graph, scenario_id, tmp_instance_id)
         
+        self.__remove_activation_layers__(model_graph, scenario_id)
         
+        self.info.set_scenario_status_ready(scenario_id)
         
+        mongo.pull_instance_value(tmp_instance_id, 'statusQueue', scenario_id)
+        if len(tmp_inst['statusQueue']) == 0:
+            mongo.set_instance_value(tmp_instance_id, 'status', 'ready')
         
+        del tr
+        del model_graph
+        gc.collect()
+        return self.default_response()
         
-        # Activations
-        # Activations = self.lazy.lazy_typing_activations(dataset_name)
-        # activations = Activations(tr.get_current_model(), model_graph, tr.get_current_loss(), tr.get_current_optimizer(), tr.get_current_metric(), tr.get_current_test_dataset())
-        # conf_matrix, indices_images = compute_activations_stats(mongo, tr.get_current_model(), params['scenario_id'], tmp_scen['instanceId'], activations, tr.get_nb_classes(), tr.get_current_test_dataset(), dataset_name=dataset_name)
-        # mongo.push_scenario_value(params['scenario_id'], "confusionMatrix", conf_matrix)
-        # mongo.push_scenario_value(params['scenario_id'], "indicesImages", indices_images)
-        # nodes_list, edges_list = model_graph.remove_activation_layers_from_model_graph()
-        # mongo.set_scenario_value(params['scenario_id'], 'layerNodes', nodes_list)
-        # mongo.set_scenario_value(params['scenario_id'], 'layerEdges', edges_list)
-        
-        # # Finish
-        # mongo.set_scenario_value(params['scenario_id'], 'status', 'ready')
-        # mongo.set_scenario_value(params['scenario_id'], 'message', '')
-        # mongo.pull_instance_value(tmp_scen['instanceId'], 'statusQueue', params['scenario_id'])
-        # if len(tmp_inst['statusQueue']) == 0:
-        #     mongo.set_instance_value(tmp_scen['instanceId'], 'status', 'ready')
-
-        # del activations
-        # del tr
-        # del model_graph
-        # return self.default_response()
-        
-        
-        # TODO: The rest is already DONE
-        
-        # tr_class = lazy_typing_train(dataset_name=dataset_name)
-        # tr = tr_class(dataset_name=dataset_name, model_name=tmp_inst['modelName'], epochs=tmp_inst['epochs'], batch_size=tmp_inst['batchSize'], shuffle_buffer_size=tmp_inst['shuffleBufferSize'], val_split_ratio=tmp_inst['validationSplitRatio'], optimizer_name=tmp_inst['optimizerName'], loss_name=tmp_inst['lossName'], metric_name=tmp_inst['metricName'])
-        
-        # Load everything
-        # mongo.set_scenario_value(params['scenario_id'], 'message', 'Importing dataset...')
-        # tr.load_dataset(seed=tmp_inst['_id'])
-        # mongo.set_scenario_value(params['scenario_id'], 'message', 'Importing training model...')
-        # tr.load_model()
-        # mongo.set_scenario_value(params['scenario_id'], 'message', 'Training model initialisation...')
-        # tr.load_optimizer()
-        # tr.load_loss()
-        # tr.load_metric()
-        # tr.load_callbacks()
-        # tr.compile_model()
-
-        # Run training
-        # def train_checkpoint(epoch, epoch_total, step, step_total, acc, loss):
-        #     scen = mongo.get_scenario(params['scenario_id'])
-        #     if type(scen) == type(None):
-        #         return False
-        #     mongo.set_scenario_value(params['scenario_id'], 'accuracy', float(acc))
-        #     mongo.set_scenario_value(params['scenario_id'], 'loss', float(loss))
-        #     tmp = (epoch/epoch_total)*100 + (step/step_total)
-        #     mongo.set_scenario_value(params['scenario_id'], 'progressStep', tmp)
-        #     # stop or continue
-        #     if scen['status'] == 'stop':
-        #         mongo.set_scenario_value(params['scenario_id'], 'message', 'Training interrupted by the user.')
-        #         return False
-        #     mongo.set_scenario_value(params['scenario_id'], 'message', 'Training model...#Epoch ' + str(epoch) + '/' + str(epoch_total) + '#Step ' + str(step) + '/' + str(step_total))
-        #     return True
-
-        # def test_checkpoint(train_acc, val_acc, val_loss):
-        #     mongo.push_scenario_value(params['scenario_id'], 'valAccuracies', float(val_acc))
-        #     mongo.push_scenario_value(params['scenario_id'], 'losses', float(val_loss))
-        #     mongo.push_scenario_value(params['scenario_id'], 'trainAccuracies', float(train_acc))
-
-        # finished = True
-        # path = os.getcwd()
-        # dest_path = 'models/' + str(tmp_scen['instanceId']) + "/" + str(tmp_scen['_id'])
-        # if not os.path.exists(path + "/" + dest_path):
-        #     os.makedirs(dest_path)
-        # filepath = path + '/' + dest_path + '/' + params['scenario_id'] + '.h5'
-
-        # if tmp_inst['epochs'] > 0:
-        #     finished = tr.train(train_checkpoint, test_checkpoint, filepath)
-        # else:
-        #     # Save model
-        #     mongo.set_scenario_value(params['scenario_id'], 'message', 'Saving the training model...')
-        #     tr.saveModel(filepath)
-
-        # # Evaluation on Test dataset
-        # evaluation = tr.evaluate(filepath)
-        # mongo.set_scenario_value(params['scenario_id'], 'loss', float(evaluation[0]))
-        # mongo.set_scenario_value(params['scenario_id'], 'accuracy', float(evaluation[1]))
-
-        # mongo.set_scenario_value(params['scenario_id'], 'message', "Extracting the model's layers...")
-        # layers_nodes, layers_edges = tr.saveConfig()
-
-        # # Build layers
-        # nodes = []
-        # edges = []
-        # layersMap = {}
-        # size = 0
-        # for layer in layers_nodes:
-        #     layer['instanceId'] = tmp_scen['instanceId']
-        #     layer['scenarioId'] = tmp_scen['_id']
-        #     layer['userId'] = tmp_scen['userId']
-        #     tmp = mongo.insert_layer(layer)
-        #     nodes.append(str(tmp))
-        #     layersMap[layer['name']] = str(tmp)
-        #     size += layer['params']
-        # for l_edge in layers_edges:
-        #     tmp = {}
-        #     tmp['source'] = layersMap[l_edge['source']]
-        #     tmp['target'] = layersMap[l_edge['target']]
-        #     edges.append(tmp)
-        # mongo.set_scenario_value(params['scenario_id'], 'networkSize', size)
-
-        # # Build Abstract Graph of model for later (when computing activation)
-        # model_graph = ModelGraph(nodes, layers_nodes, edges)
-
-        # if not is_training_finished:
-        #     mongo.pull_instance_value(tmp_scen['instanceId'], 'statusQueue', params['scenario_id'])
-        #     if len(tmp_inst['statusQueue']) == 1:
-        #         mongo.set_instance_value(tmp_scen['instanceId'], 'status', 'ready')
-        #     return {
-        #         "statusCode": 200,
-        #         "body": True,
-        #     }
-
-        # Compute flops
-        # mongo.set_scenario_value(params['scenario_id'], 'sizeGain', os.stat(model_path).st_size)
-        # flops = tr.get_model_flops()
-        # mongo.set_scenario_value(params['scenario_id'], 'flops', flops)
-
-        # # Compute activations
-        # # activations = Activations(tr.get_current_model(), model_graph, tr.get_current_loss(), tr.get_current_optimizer(), tr.get_current_metric(), tr.get_current_test_dataset())
-        # activations_class = lazy_typing_act(dataset_name=dataset_name)
-        # activations = activations_class(tr.get_current_model(), model_graph, tr.get_current_loss(), tr.get_current_optimizer(), tr.get_current_metric(), tr.get_current_test_dataset())
-        # conf_matrix, indices_images = compute_activations_stats(mongo, tr.get_current_model(), params['scenario_id'], tmp_scen['instanceId'], activations, tr.get_nb_classes(), tr.get_current_test_dataset(), dataset_name=dataset_name)
-        # mongo.push_scenario_value(params['scenario_id'], "confusionMatrix", conf_matrix)
-        # mongo.push_scenario_value(params['scenario_id'], "indicesImages", indices_images)
-        # nodes_list, edges_list = model_graph.remove_activation_layers_from_model_graph()
-        # mongo.set_scenario_value(params['scenario_id'], 'layerNodes', nodes_list)
-        # mongo.set_scenario_value(params['scenario_id'], 'layerEdges', edges_list)
-
-        
-        
-        
-        
-    
     
     def scenario_deletion(self, params):
         path = os.getcwd()

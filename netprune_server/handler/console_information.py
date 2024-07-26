@@ -1,5 +1,6 @@
 from process.colors import bcolors
 
+
 class ConsoleInformation():
     def __init__(self) -> None:
         pass

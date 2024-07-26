@@ -3,9 +3,11 @@ import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import time
 
-from abstract_training import AbstractTraining
+from architectures.architecture import ArchitectureChooser
 from handler.console_information import ConsoleInformation
-from train_test_steps import TrainStep, TestStep
+from process.abstract_training import AbstractTraining
+from process.train_test_steps import TrainStep, TestStep
+
 
 class TrainingDefault(AbstractTraining):
     def __init__(self, dataset_name='mnist', model_name='vgg16', epochs=10, batch_size=128, val_split_ratio=0.1, optimizer_name='Nadam', loss_name='CategoricalCrossentropy', metric_name='CategoricalAccuracy'):
@@ -92,7 +94,7 @@ class TrainingDefault(AbstractTraining):
             
         (x_train, y_train), (x_test, y_test) = dataset.load_data()
         self.num_classes = np.amax(y_train)+1
-        x_train, y_train = self.cut_eval_dataset(x_train, y_train, self.num_classes, self.model_name, test_set_split_ratio)
+        x_train, y_train = self.cut_eval_dataset(x_train, y_train, self.num_classes, to_pad, self.model_name, test_set_split_ratio)
         
         x_train, channels = self.__reshape_dataset_to_four_dims__(x_train)
         x_test, _ = self.__reshape_dataset_to_four_dims__(x_test)
@@ -125,10 +127,18 @@ class TrainingDefault(AbstractTraining):
             self.__setup_data_augmentation__()
             
         val_dataset = tf.data.Dataset.from_tensor_slices((x_train[-train_set_size:], y_train[-train_set_size:]))
-        self.val_dataset = val_dataset.batch(batch_size)
+        self.val_dataset = val_dataset.batch(self.batch_size)
         self.x_test = x_test
         self.y_test = y_test
         print(np.shape(self.x_train), np.shape(self.y_train))
+    
+    
+    def load_architecture(self, model_name=''):
+        if model_name != '':
+            self.model_name = model_name
+        archi_chooser = ArchitectureChooser(self.model_name)
+        self.model = archi_chooser.choose_architecture(self.x_train[0].shape)
+        self.model.summary()
     
     
     def cut_eval_dataset(self, dataset_x, dataset_y, nb_classes, to_pad, model_name='', test_set_split_ratio=.166):

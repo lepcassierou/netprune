@@ -139,7 +139,7 @@ class ActivationsDefault:
             if "conv" in layer.name or "dense" in layer.name:
                 # TODO: Check whether Activation is a function within a layer or an individual layer
                 true_layer_db_name = get_db_name(true_layer_name)
-                activ_db_name, activ_real_name = self.get_next_activation_layer(layer, true_layer_db_name)
+                activ_db_name, activ_real_name = self.get_next_activation_layer(true_layer_db_name)
                 if activ_db_name is None:
                     self.compute_activations_single_layer(repository, true_layer_name, layer, true_layer_db_name)    
                 else:

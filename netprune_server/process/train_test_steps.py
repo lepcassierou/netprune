@@ -1,5 +1,6 @@
 import tensorflow as tf
 
+
 class TrainStep():
     def __init__(self):
         return

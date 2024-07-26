@@ -28,6 +28,14 @@ class AbstractTraining(ABC):
         self.optimizer_name = optimizer_name
         self.loss_name = loss_name
         self.metric_name = metric_name
+        print("Dataset name: ", self.dataset_name)
+        print("Model name: ", self.model_name)
+        print("Epochs: ", self.epochs)
+        print("Batch size: ", self.batch_size)
+        print("Val split ratio: ", self.val_split_ratio)
+        print("Optimizer name: ", self.optimizer_name)
+        print("Loss name: ", self.loss_name)
+        print("Metric name: ", self.metric_name)
         
         self.datasets = ['cifar10', 'fashion_mnist', 'mnist', 'cats_vs_dogs']
         self.models = ['lenet5', 'lenet300-100', 'lenet_4_variant', 'vgg16', 'vgg16_cifar', 'vgg16_cifar_2fc', 'vgg19', 'two-layer', 'cvsd_conv', 'resnet50']
@@ -178,7 +186,12 @@ class AbstractTraining(ABC):
         pass
     
     
-    def load_model(self, filename):
+    @abstractmethod
+    def load_architecture(self, model_name=''):
+        pass
+        
+        
+    def load_model_from_file(self, filename=''):
         self.model = tf.keras.models.load_model(filename)
         print("Best model loaded \n")
         
@@ -213,11 +226,6 @@ class AbstractTraining(ABC):
         self.active_callbacks = callbacks_module.CallbackList(self.callbacks, add_history=True, model=self.model, verbose=verbose, epochs=self.epochs)
         
     
-    @abstractmethod
-    def __load__(self,):
-        pass
-        
-        
     
     ####### Others #######
     @abstractmethod
@@ -241,12 +249,12 @@ class AbstractTraining(ABC):
     
     
     def evaluate(self, filename):
-        self.load_model(filename)
+        self.load_model_from_file(filename)
         return self.model.evaluate(self.x_test, self.y_test)
     
     
     def predict(self, filename):
-        self.load_model(filename)
+        self.load_model_from_file(filename)
         return self.model.predict(self.x_test, steps=10)
     
     

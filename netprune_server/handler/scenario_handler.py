@@ -5,7 +5,7 @@ import shutil
 from connector.mongo_connector import Mongo
 from handler.abstract_handler import AbstractHandler
 from handler.information import Information
-from handler.db_layer_name import LayerName2DBName, DBName2LayerName, StatsSaver
+from handler.db_layer_name import LayerName2DBName, DBName2LayerName, MetricsSaver
 from process.confusion_matrix import ConfusionMatrix
 from process.lazy_typing import LazyTyping
 from process.model_graph import ModelGraph
@@ -113,16 +113,16 @@ class ScenarioHandler(AbstractHandler):
         db_layers = mongo.get_layers_by_scenario_id(scenario_id)
         ln2db = LayerName2DBName(db_layers)
         db2ln = DBName2LayerName(mongo)
-        stats_saver = StatsSaver(mongo)
+        metrics_saver = MetricsSaver(mongo)
         
         repository = f"models/{instance_id}/{scenario_id}/"
 
         # Compute statistics
         activations.compute_normalized_activations(repository, ln2db.get_db_name_from_layername)
 
-        Statistics = self.lazy.lazy_typing_stats(dataset_name=dataset_name)
-        stats = Statistics(model, repository, nb_classes, test_dataset)
-        stats.statistics_from_normalized_data(db2ln.get_layername_from_db_name, stats_saver.save_statistics_to_db)
+        Metrics = self.lazy.lazy_typing_metrics(dataset_name=dataset_name)
+        metrics = Metrics(model, repository, nb_classes, test_dataset)
+        metrics.metrics_from_normalized_data(db2ln.get_layername_from_db_name, metrics_saver.save_metrics_to_db)
 
         cm = ConfusionMatrix(nb_classes)
         confusion_matrix, confusion_images = cm.compute_confusion_matrices(activations)

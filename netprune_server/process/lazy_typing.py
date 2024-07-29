@@ -1,6 +1,6 @@
-from process.activations_default import *
-# from process.fine_tuning_default import *
-from process.statistics_default import *
+from process.activations_default import ActivationsDefault
+from process.finetuning_default import FineTuningDefault
+from process.metrics_default import MetricsDefault
 from process.training_default import TrainingDefault
 
 
@@ -17,13 +17,13 @@ class LazyTyping():
     def lazy_typing_finetuning(self, dataset_name):
         if dataset_name == "cats_vs_dogs":
             return FineTuningCatsDogs
-        return FineTuning
+        return FineTuningDefault
         
         
-    def lazy_typing_stats(self, dataset_name):
+    def lazy_typing_metrics(self, dataset_name):
         if dataset_name == "cats_vs_dogs":
-            return StatisticsCatsDogs
-        return StatisticsDefault
+            return MetricsCatsDogs
+        return MetricsDefault
         
         
     def lazy_typing_activations(self, dataset_name):

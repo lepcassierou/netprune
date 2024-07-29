@@ -41,6 +41,7 @@ class ConfusionMatrix():
         conf_matrix = np.zeros((self.nb_classes, self.nb_classes), dtype=np.int32)
         for i in range(nb_samples):
             conf_matrix[labels[i]][categ_preds[i]] += 1
+        return conf_matrix
     
     
     def compute_confusion_matrices(self, activations):

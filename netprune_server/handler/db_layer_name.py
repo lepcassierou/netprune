@@ -21,10 +21,10 @@ class DBName2LayerName():
     
     
     
-class StatsSaver():
+class MetricsSaver():
     def __init__(self, mongo) -> None:
         self.mongo = mongo
         
         
-    def save_statistics_to_db(self, db_layer_id, stats):
+    def save_metrics_to_db(self, db_layer_id, stats):
         self.mongo.set_layer_statistics(db_layer_id, stats)

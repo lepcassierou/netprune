@@ -80,3 +80,7 @@ class Information():
         
     def saving_training_model(self, scenario_id):
         self.mongo.set_scenario_value(scenario_id, 'message', "Saving the training model...")
+        
+        
+    def extracting_model_layers(self, scenario_id):
+        self.mongo.set_scenario_value(scenario_id, 'message', "Extracting the layers from the reference model...")

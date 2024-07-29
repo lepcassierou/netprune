@@ -50,6 +50,22 @@ class ScenarioHandler(AbstractHandler):
         return is_training_finished, model_path
     
     
+    def __finetune_model__(self, mongo, finetuning_obj, new_scenario_id, model_path, dest_path, epochs):
+        train_c = TrainCheckpoint(mongo, new_scenario_id)
+        test_c = TestCheckpoint(mongo, new_scenario_id)
+        is_training_finished = True
+        path = os.getcwd()
+        if not os.path.exists(path + '/' + dest_path):
+            os.makedirs(dest_path)
+        if epochs > 0:
+            is_training_finished = finetuning_obj.train(train_c.train_checkpoint, test_c.test_checkpoint, model_path)
+        else:
+            # Save model
+            self.info.saving_training_model(new_scenario_id)
+            finetuning_obj.save_model(model_path)
+        return is_training_finished
+    
+    
     def __evaluate_model_test__(self, training_obj, model_path, scenario_id):
         evaluation = training_obj.evaluate(model_path)
         self.info.update_test_metrics(scenario_id, evaluation)
@@ -57,6 +73,7 @@ class ScenarioHandler(AbstractHandler):
         
     def __extract_model_graph__(self, mongo, training_obj, scenario_id, tmp_instance_id, tmp_scenario_id, tmp_user_id):
         mongo.set_scenario_value(scenario_id, 'message', "Extracting the model's layers...")
+        self.info.extracting_model_layers(scenario_id)
         layers_nodes, layers_edges = training_obj.save_config()
 
         # Build layers
@@ -82,9 +99,9 @@ class ScenarioHandler(AbstractHandler):
         return ModelGraph(nodes, layers_nodes, edges)
     
     
-    def __training_interrupted__(self, mongo, tmp_instance_id, scenario_id, tmp_instance_status):
+    def __training_interrupted__(self, mongo, tmp_instance_id, scenario_id, tmp_instance_status, len_status = 0):
         mongo.pull_instance_value(tmp_instance_id, 'statusQueue', scenario_id)
-        if len(tmp_instance_status) == 1:
+        if len(tmp_instance_status) == len_status:
             self.info.set_instance_status_ready(tmp_instance_id)
         return self.default_response()
     
@@ -150,6 +167,23 @@ class ScenarioHandler(AbstractHandler):
         self.info.update_layer_nodes_edges(scenario_id, nodes_list, edges_list)
     
     
+    def __build_netw_archi_from_reference__(self, mongo, finetuning_obj, model_path, ref_scenario_id, new_scenario_id):
+        # Build new network architecture from the reference
+        finetuning_filters = mongo.get_finetuning_filters(ref_scenario_id, new_scenario_id)
+        if(finetuning_filters is None):
+            finetuning_obj.build_model_with_weights({}, filepath=model_path)
+        else:
+            finetuning_obj.build_model_with_weights(finetuning_filters['selection'], filepath=model_path)
+        mongo.set_scenario_value(new_scenario_id, 'message', 'Training model initialisation...')
+        
+        
+    def __finish_scenario__(self, mongo, scenario_id, instance_id, instance_status_queue):
+        self.info.set_instance_status_ready(scenario_id)
+        mongo.pull_instance_value(instance_id, 'statusQueue', scenario_id)
+        if len(instance_status_queue) == 0:
+            mongo.set_instance_value(instance_id, 'status', 'ready')
+    
+    
     def scenario_init(self, params):
         """ Compute statistics of filters based on their activation maps 
             Parameters:
@@ -186,14 +220,11 @@ class ScenarioHandler(AbstractHandler):
         
         self.__remove_activation_layers__(model_graph, scenario_id)
         
-        self.info.set_scenario_status_ready(scenario_id)
-        
-        mongo.pull_instance_value(tmp_instance_id, 'statusQueue', scenario_id)
-        if len(tmp_inst['statusQueue']) == 0:
-            mongo.set_instance_value(tmp_instance_id, 'status', 'ready')
+        self.__finish_scenario__(mongo, scenario_id, tmp_instance_id, tmp_inst['statusQueue'])
         
         del tr
         del model_graph
+        del self.info
         gc.collect()
         return self.default_response()
         
@@ -206,7 +237,66 @@ class ScenarioHandler(AbstractHandler):
     
     
     def scenario_inheritance(self, params):
-        pass
-    
-    
-    
+        """ Compute statistics of filters based on their activation maps 
+            Parameters:
+                params (any): parameters of scenario_inheritance
+
+            Returns:
+        """
+        mongo = Mongo()
+        self.info = Information(mongo)
+        ref_scenario_id = params['ref_scenario_id']
+        new_scenario_id = params['new_scenario_id']
+        ref_scen = mongo.get_scenario(ref_scenario_id)
+        ref_instance_id = ref_scen['instanceId']
+        finetuned_scen = mongo.get_scenario(new_scenario_id)
+        tmp_inst = mongo.get_instance(ref_instance_id)        
+        self.info.init_progress(new_scenario_id)
+        dataset_name = tmp_inst['datasetName']
+        FineTuning = self.lazy.lazy_typing_finetuning(dataset_name)
+        ft = FineTuning(dataset_name=dataset_name, model_name=tmp_inst['modelName'], epochs=finetuned_scen['epochs'], batch_size=tmp_inst['batchSize'], val_split_ratio=tmp_inst['validationSplitRatio'], optimizer_name=tmp_inst['optimizerName'], loss_name=tmp_inst['lossName'], metric_name=tmp_inst['metricName'])
+        self.info.loading_dataset(new_scenario_id)
+        ft.load_dataset(seed=tmp_inst['_id'])
+        self.info.loading_model(new_scenario_id)
+
+        # Load <model>.h5 file
+        root_path = os.getcwd()
+        model_path = f"{root_path}/models/{ref_instance_id}/{ref_scenario_id}/{ref_scenario_id}.h5"
+        
+        # TODO: Implement that function
+        self.__build_netw_archi_from_reference__(mongo, ft, model_path, ref_scenario_id, new_scenario_id)
+
+        dest_path = f"models/{finetuned_scen["instanceId"]}/{new_scenario_id}"
+        new_model_path = f"{root_path}/{dest_path}/{new_scenario_id}.h5"
+        ft.load_optimizer()
+        ft.load_loss()
+        ft.load_metric()
+        ft.load_callbacks(filepath=new_model_path)
+        ft.compile_model()
+        
+        model_graph = self.__extract_model_graph__(mongo, ft, new_scenario_id, finetuned_scen['instanceId'], finetuned_scen['_id'], finetuned_scen['userId'])
+        
+        is_training_finished = self.__finetune_model__(mongo, ft, new_scenario_id, new_model_path, dest_path, finetuned_scen['epochs'])
+        self.__evaluate_model_test__(ft, new_model_path, new_scenario_id)
+        if not is_training_finished:
+            return self.__training_interrupted__(mongo, finetuned_scen['instanceId'], new_scenario_id, tmp_inst['statusQueue'], len_status=1)
+        
+        self.__compute_flops__(ft, new_scenario_id, new_model_path)
+
+        self.__compute_activations__(mongo, ft, dataset_name, model_graph, new_scenario_id, ref_instance_id)
+
+        self.__remove_activation_layers__(model_graph, new_scenario_id)
+
+        # Compute performances on a never seen validation set 
+        if finetuned_scen['leaf']:
+            validation = ft.validate(new_model_path)
+            mongo.set_scenario_value(new_scenario_id, 'validation', float(validation[1]))
+
+        self.__finish_scenario__(mongo, new_scenario_id, finetuned_scen['instanceId'], tmp_inst['statusQueue'])
+        
+        del ft
+        del model_graph
+        del self.info
+        gc.collect()
+        return self.default_response()
+        

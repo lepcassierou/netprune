@@ -5,6 +5,7 @@ import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import time
 
+from handler.console_information import ConsoleInformation
 from process.available_parameters import AvailableParameters
 from process.gpu_setup import GPUSetup
 from process.train_test_steps import TrainStep, TestStep
@@ -16,6 +17,7 @@ class AbstractTrFt(ABC):
         super().__init__()
         GPUSetup.gpu_setup()
         self.init_parameters(dataset_name, model_name, epochs, batch_size, val_split_ratio, optimizer_name, loss_name, metric_name)
+        self.console_info = ConsoleInformation()
         
         
     def init_parameters(self, dataset_name, model_name, epochs, batch_size, val_split_ratio, optimizer_name, loss_name, metric_name):
@@ -134,10 +136,14 @@ class AbstractTrFt(ABC):
         self.metric_name = name
         
         
-    @abstractmethod
     def set_callbacks(self, filepath=None):
-        pass
+        self.callbacks = [tf.keras.callbacks.LearningRateScheduler(self.__lr_scheduler__)]
         
+        
+    def __lr_scheduler__(self, epoch):
+        learning_rate = 0.1
+        decay = epoch >= self.epochs*0.75 and 2 or epoch >= self.epochs*0.5 and 1 or 0
+        return learning_rate * (0.1**decay)        
         
         
     ####### Save #######

@@ -178,10 +178,11 @@ class ScenarioHandler(AbstractHandler):
         
         
     def __finish_scenario__(self, mongo, scenario_id, instance_id, instance_status_queue):
-        self.info.set_instance_status_ready(scenario_id)
+        self.info.set_scenario_status_ready(scenario_id)
         mongo.pull_instance_value(instance_id, 'statusQueue', scenario_id)
+        print("Queue status", instance_status_queue)
         if len(instance_status_queue) == 0:
-            mongo.set_instance_value(instance_id, 'status', 'ready')
+            self.info.set_instance_status_ready(instance_id)
     
     
     def scenario_init(self, params):
@@ -266,7 +267,7 @@ class ScenarioHandler(AbstractHandler):
         # TODO: Implement that function
         self.__build_netw_archi_from_reference__(mongo, ft, model_path, ref_scenario_id, new_scenario_id)
 
-        dest_path = f"models/{finetuned_scen["instanceId"]}/{new_scenario_id}"
+        dest_path = f"models/{finetuned_scen['instanceId']}/{new_scenario_id}"
         new_model_path = f"{root_path}/{dest_path}/{new_scenario_id}.h5"
         ft.load_optimizer()
         ft.load_loss()

@@ -19,6 +19,6 @@ class AbstractTraining(AbstractTrFt):
         
     def load_callbacks(self, filepath=None):
         verbose = 1
-        self.set_callbacks()
+        self.set_callbacks(filepath)
         self.active_callbacks = callbacks_module.CallbackList(self.callbacks, add_history=True, model=self.model, verbose=verbose, epochs=self.epochs)
         

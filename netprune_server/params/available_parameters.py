@@ -6,7 +6,7 @@ class AvailableParameters():
     
     @staticmethod
     def get_models():
-        return ['lenet5', 'lenet300-100', 'lenet_4_variant', 'vgg16', 'two-layer']
+        return ['lenet5', 'lenet300-100', 'lenet_4_variant', 'vgg16', 'two-layer', 'custom']
     
     
     @staticmethod

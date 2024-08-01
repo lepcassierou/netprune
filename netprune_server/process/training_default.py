@@ -15,6 +15,10 @@ class TrainingDefault(AbstractTraining):
         if model_name != '':
             self.model_name = model_name
         archi_chooser = ArchitectureChooser(self.model_name)
-        self.model = archi_chooser.choose_architecture(self.x_train[0].shape)
+        shape = None
+        if self.custom_dataset:
+            shape = self.dataset_params.images_dims
+        else:
+            shape = self.x_train[0].shape
+        self.model = archi_chooser.choose_architecture(shape, self.num_classes)
         self.model.summary()
-    

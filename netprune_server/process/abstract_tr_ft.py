@@ -6,10 +6,10 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import time
 
 from handler.console_information import ConsoleInformation
-from process.available_parameters import AvailableParameters
+from params.available_parameters import AvailableParameters
+from params.default_dataset_params import DefaultDatasetParams
 from process.gpu_setup import GPUSetup
 from process.train_test_steps import TrainStep, TestStep
-
 
 class AbstractTrFt(ABC):
     @abstractmethod
@@ -62,7 +62,12 @@ class AbstractTrFt(ABC):
     
     
     def get_test_set(self):
-        return self.x_test, self.y_test
+        if self.custom_dataset:
+            x_test = np.load(f"{self.out_test_dir}/x_test.npy")
+            y_test = np.load(f"{self.out_test_dir}/y_test.npy")
+            return x_test, y_test
+        else:
+            return self.x_test, self.y_test
     
     
     def get_models(self):
@@ -137,7 +142,10 @@ class AbstractTrFt(ABC):
         
         
     def set_callbacks(self, filepath=None):
-        self.callbacks = [tf.keras.callbacks.LearningRateScheduler(self.__lr_scheduler__)]
+        # self.callbacks = [tf.keras.callbacks.LearningRateScheduler(self.__lr_scheduler__)]
+        self.callbacks = []
+        if filepath is not None:
+            self.callbacks.append(tf.keras.callbacks.ModelCheckpoint(filepath, save_best_only=True, save_freq="epoch", monitor='val_loss', mode='auto', ))
         
         
     def __lr_scheduler__(self, epoch):
@@ -195,7 +203,8 @@ class AbstractTrFt(ABC):
             optimizer_name = self.optimizer_name
         else:
             self.optimizer_name = optimizer_name
-        self.optimizer = tf.keras.optimizers.get(optimizer_name)
+        # self.optimizer = tf.keras.optimizers.get(optimizer_name)
+        self.optimizer = tf.keras.optimizers.Adamax(lr=0.001)
         
         
     def load_loss(self, loss_name=''):
@@ -219,16 +228,49 @@ class AbstractTrFt(ABC):
         pass
     
     
-    def load_dataset(self, dataset_name='', model_name='', batch_size=0, to_pad=False, augment_data=False, seed=0):
-        self.random_seed = [ord(i) for i in list(seed)]
-        dataset, val_split_ratio, test_set_split_ratio = self.__dataset_name_to_dataset__(dataset_name)
-
-        if model_name != '':
-            self.model_name = model_name
-            
+    def __load_dataset_from_files__(self, dataset_name, batch_size):
+        if dataset_name != '':
+            self.dataset_name = dataset_name
+        self.dataset_params = DefaultDatasetParams()
+        if batch_size == 0:
+            batch_size = self.dataset_params.batch_size
+        
+        self.out_train_dir = f"./datasets/{self.dataset_name}/{self.dataset_params.train}"
+        self.out_val_dir = f"./datasets/{self.dataset_name}/{self.dataset_params.val}"
+        self.out_test_dir = f"./datasets/{self.dataset_name}/{self.dataset_params.test}"
+        self.out_evaluation_dir = f"./datasets/{self.dataset_name}/{self.dataset_params.eval}"
+        
+        self.datagen = ImageDataGenerator(
+            rescale=self.dataset_params.rescale,
+            horizontal_flip=self.dataset_params.horizontal_flip,
+            zoom_range=self.dataset_params.zoom_range,
+            rotation_range=self.dataset_params.rotation_range,
+        )
+        self.num_classes = self.dataset_params.num_classes
+        
+        self.train_set = self.datagen.flow_from_directory(
+            self.out_train_dir, 
+            target_size=self.dataset_params.images_size,
+            classes=self.dataset_params.classes_label, 
+            batch_size=batch_size, 
+        )
+        
+        self.datagen_val = ImageDataGenerator(
+            rescale=self.dataset_params.rescale,
+        )
+        
+        self.val_set = self.datagen_val.flow_from_directory(
+            self.out_val_dir, 
+            target_size=self.dataset_params.images_size,
+            classes=self.dataset_params.classes_label, 
+            batch_size=batch_size, 
+        )
+    
+    
+    def __load_dataset_from_library__(self, dataset, to_pad, test_set_split_ratio, val_split_ratio, batch_size, augment_data):
         (x_train, y_train), (x_test, y_test) = dataset.load_data()
         self.num_classes = np.amax(y_train)+1
-        x_train, y_train, x_eval, y_eval = self.cut_eval_dataset(x_train, y_train, self.num_classes, to_pad, self.model_name, test_set_split_ratio)
+        x_train, y_train, x_eval, y_eval = self.cut_eval_dataset(x_train, y_train, self.num_classes, test_set_split_ratio)
         
         x_train, channels = self.__reshape_dataset_to_four_dims__(x_train)
         x_test, _ = self.__reshape_dataset_to_four_dims__(x_test)
@@ -273,6 +315,20 @@ class AbstractTrFt(ABC):
         self.x_evaluation = x_eval
         self.y_evaluation = y_eval
         print(np.shape(self.x_train), np.shape(self.y_train))
+        
+    
+    def load_dataset(self, dataset_name='', model_name='', batch_size=0, to_pad=False, augment_data=False, seed=0):
+        self.random_seed = [ord(i) for i in list(seed)]
+        if model_name != '':
+            self.model_name = model_name
+        dataset, val_split_ratio, test_set_split_ratio = self.__dataset_name_to_dataset__(dataset_name)
+        if dataset is None:
+            self.custom_dataset = True
+            self.__load_dataset_from_files__(dataset_name, batch_size)
+        else:
+            self.custom_dataset = False
+            self.__load_dataset_from_library__(dataset, to_pad, test_set_split_ratio, val_split_ratio, batch_size, augment_data)
+    
     
     
     ####### Others #######
@@ -301,7 +357,7 @@ class AbstractTrFt(ABC):
         return dataset, val_split_ratio, test_set_split_ratio
         
         
-    def cut_eval_dataset(self, dataset_x, dataset_y, nb_classes, to_pad, model_name='', test_set_split_ratio=.166):
+    def cut_eval_dataset(self, dataset_x, dataset_y, nb_classes, test_set_split_ratio=.166):
         # 1) Simplify dimension of dataset_y
         dataset_y = np.asarray(dataset_y).squeeze()
             
@@ -350,9 +406,6 @@ class AbstractTrFt(ABC):
         p3 = np.random.RandomState(seed=self.random_seed).permutation(range(len(dataset_y2)))
         dataset_x2 = dataset_x2[p3]
         dataset_y2 = dataset_y2[p3]
-        
-        if model_name != '':
-            self.model_name = model_name
 
         return dataset_x1, dataset_y1, dataset_x2, dataset_y2
     
@@ -365,75 +418,91 @@ class AbstractTrFt(ABC):
          
         
     def train(self, train_checkpoint = None, test_checkpoint = None, checkpoint_file_path = None):
-        if train_checkpoint is None:
-            self.console_info.train_fct_incorrect()
-        if test_checkpoint is None:
-            self.console_info.test_fct_incorrect()
-        if checkpoint_file_path is None:
-            self.console_info.file_path_incorrect()
+        if self.custom_dataset:
+            self.set_callbacks(checkpoint_file_path)
+            self.model.fit(self.train_set, validation_data=self.val_set, epochs=self.epochs, callbacks=self.callbacks)
+            return True
+        else:
+            if train_checkpoint is None:
+                self.console_info.train_fct_incorrect()
+            if test_checkpoint is None:
+                self.console_info.test_fct_incorrect()
+            if checkpoint_file_path is None:
+                self.console_info.file_path_incorrect()
+                
+            self.active_callbacks.on_train_begin()
+            step_total = len(self.x_train)*(1-self.val_split_ratio)
+            step_mod = (step_total/self.batch_size)/10
+            train_step = TrainStep()
+            test_step = TestStep()
+            self.console_info.print_line()
+            generator = self.__setup_generator__()
             
-        self.active_callbacks.on_train_begin()
-        step_total = len(self.x_train)*(1-self.val_split_ratio)
-        step_mod = (step_total/self.batch_size)/10
-        train_step = TrainStep()
-        test_step = TestStep()
-        self.console_info.print_line()
-        generator = self.__setup_generator__()
-        
-        for epoch in range(self.epochs):
-            epoch_is_better = False
-            self.console_info.epochs_info(epoch+1, self.epochs)
-            start_time = time.time()
-            
-            nb_steps = len(self.x_train) / self.batch_size
-            for step, (x_batch_train, y_batch_train) in enumerate(generator):
-                loss_value = train_step(x_batch_train, y_batch_train, self.model, self.optimizer, self.loss, self.metric)
-                self.console_info.print_advancement(40, step, nb_steps)
-                # Log every 200 batches.
-                if step % int(step_mod) == 0:
-                    # Can be interrupted
-                    if not train_checkpoint(epoch, self.epochs, step * self.batch_size, step_total, self.metric.result(), loss_value):
-                        return False
-                if step >= nb_steps:
-                    # Manually break the loop because the generator loops indefinitely
+            for epoch in range(self.epochs):
+                epoch_is_better = False
+                self.console_info.epochs_info(epoch+1, self.epochs)
+                start_time = time.time()
+                
+                nb_steps = len(self.x_train) / self.batch_size
+                for step, (x_batch_train, y_batch_train) in enumerate(generator):
+                    loss_value = train_step(x_batch_train, y_batch_train, self.model, self.optimizer, self.loss, self.metric)
+                    self.console_info.print_advancement(40, step, nb_steps)
+                    # Log every 200 batches.
+                    if step % int(step_mod) == 0:
+                        # Can be interrupted
+                        if not train_checkpoint(epoch, self.epochs, step * self.batch_size, step_total, self.metric.result(), loss_value):
+                            return False
+                    if step >= nb_steps:
+                        # Manually break the loop because the generator loops indefinitely
+                        break
+                
+                # Display metrics at the end of each epoch.
+                train_acc = self.metric.result()
+                str_epoch = self.console_info.advancement(20, 1, 1)
+                str_epoch += self.console_info.train_acc_str(train_acc)
+                # Reset training metrics at the end of each epoch
+                self.metric.reset_states()
+                # Run a validation loop at the end of each epoch.
+                for x_batch_val, y_batch_val in self.val_dataset:
+                    # External test step
+                    loss_value = test_step(x_batch_val, y_batch_val, self.model, self.metric, self.loss)
+                val_acc = self.metric.result()
+                # Save model if it obtained the best performances on the validation dataset
+                if val_acc > self.best_validation_acc:
+                    self.best_validation_acc = val_acc
+                    self.save_model(checkpoint_file_path)
+                    epoch_is_better = True
+                test_checkpoint(train_acc, val_acc, loss_value)
+                self.metric.reset_states()
+                str_epoch += self.console_info.val_acc_loss_str(val_acc, loss_value, time.time() - start_time)
+                self.console_info.print_str_epoch(str_epoch, epoch_is_better)
+                dict_val_loss = { "val_loss": loss_value }
+                print(self.active_callbacks, epoch, dict_val_loss)
+                self.active_callbacks.on_epoch_end(epoch, logs=dict_val_loss)
+                if self.model.stop_training:
                     break
-            
-            # Display metrics at the end of each epoch.
-            train_acc = self.metric.result()
-            str_epoch = self.console_info.advancement(20, 1, 1)
-            str_epoch += self.console_info.train_acc_str(train_acc)
-            # Reset training metrics at the end of each epoch
-            self.metric.reset_states()
-            # Run a validation loop at the end of each epoch.
-            for x_batch_val, y_batch_val in self.val_dataset:
-                # External test step
-                loss_value = test_step(x_batch_val, y_batch_val, self.model, self.metric, self.loss)
-            val_acc = self.metric.result()
-            # Save model if it obtained the best performances on the validation dataset
-            if val_acc > self.best_validation_acc:
-                self.best_validation_acc = val_acc
-                self.save_model(checkpoint_file_path)
-                epoch_is_better = True
-            test_checkpoint(train_acc, val_acc, loss_value)
-            self.metric.reset_states()
-            str_epoch += self.console_info.val_acc_loss_str(val_acc, loss_value, time.time() - start_time)
-            self.console_info.print_str_epoch(str_epoch, epoch_is_better)
-            dict_val_loss = { "val_loss": loss_value }
-            self.active_callbacks.on_epoch_end(epoch, logs=dict_val_loss)
-            if self.model.stop_training:
-                break
-        # self.active_callbacks.on_train_end()
-        return True
+            # self.active_callbacks.on_train_end()
+            return True
         
         
     def evaluate(self, filename):
         self.load_model_from_file(filename)
-        return self.model.evaluate(self.x_test, self.y_test)
+        if self.custom_dataset:
+            x_test, y_test = self.get_test_set()
+            y_test = tf.keras.utils.to_categorical(y_test, self.num_classes)
+            return self.model.evaluate(x_test, y_test, steps=50)
+        else:
+            return self.model.evaluate(self.x_test, self.y_test)
     
     
     def predict(self, filename):
         self.load_model_from_file(filename)
-        return self.model.predict(self.x_test, steps=10)
+        steps=20
+        if self.custom_dataset:
+            x_test = np.load(f"{self.out_test_dir}/x_test.npy")
+            return self.model.predict(x_test, steps=steps)
+        else:
+            return self.model.predict(self.x_test, steps=steps)
     
     
     def compile_model(self,):

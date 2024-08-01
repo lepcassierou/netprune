@@ -62,7 +62,7 @@ class ActivationsDefault:
             # 1) Extract the activations
             instances_shape = (self.x_test.shape[0], *[i for i in layer.output_shape[1:]])
             # print("Instances_shape : ", instances_shape)
-            instances = np.ndarray(instances_shape, dtype=np.float64)
+            instances = np.ndarray(instances_shape, dtype=np.float32)
             start = 0
             step = 200
             stop = len(self.x_test)
@@ -75,7 +75,7 @@ class ActivationsDefault:
             # 2) Normalize activations per layer
             # Compute the number max of instances to treat at a 
             # time according to the memory capacities
-            nb_data = 64 # Type : Float64
+            nb_data = 32
             shape = np.shape(instances)
             dims = len(shape)
             for length in range(1, dims):

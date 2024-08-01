@@ -23,13 +23,13 @@ class Discriminability(DataAwareMetric):
         
         # Compute sum of activation_maps to determine one average AM per class
         nb_classes = len(indices_all_class)
-        am_sum = np.zeros((nb_classes, data_shape[1], data_shape[2], data_shape[3]), dtype=np.float64)
+        am_sum = np.zeros((nb_classes, data_shape[1], data_shape[2], data_shape[3]), dtype=np.float32)
         for num_class in range(nb_classes):
             step = 0
             indices = indices_all_class[num_class]
             while step < len(indices):
                 max_boundary = min(step + nb_inst_to_process, len(indices))
-                am_sliced = np.array(self.data[indices[step:max_boundary]], dtype=np.float64)
+                am_sliced = np.array(self.data[indices[step:max_boundary]], dtype=np.float32)
                 am_sum[num_class] = np.sum(am_sliced, axis=0)
                 del am_sliced
                 step += nb_inst_to_process

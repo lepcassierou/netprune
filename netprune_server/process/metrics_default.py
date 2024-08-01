@@ -124,10 +124,10 @@ class MetricsDefault:
 
         # Compute sum of data along axis 1 and 2, by chunk
         step = 0
-        data_sum = np.zeros((shape[0], shape[-1]), dtype=np.float64)
+        data_sum = np.zeros((shape[0], shape[-1]), dtype=np.float32)
         while step < shape[0]:
             max_boundary = min(step + nb_inst_to_process, shape[0])
-            data_sliced = np.asarray(data[step:max_boundary], dtype=np.float64)
+            data_sliced = np.asarray(data[step:max_boundary], dtype=np.float32)
             data_sum[step:max_boundary] = np.sum(data_sliced, axis=(1,2))
             step += nb_inst_to_process
         return data_sum / activations_count
@@ -153,4 +153,4 @@ class MetricsDefault:
             if nb_indices > 0:
                 average_values = np.mean(squeezed_data[indices], axis=0)
                 average_per_class.append(average_values)
-        return np.asarray(average_per_class, dtype=np.float64)
+        return np.asarray(average_per_class, dtype=np.float32)

@@ -1,4 +1,5 @@
 from abc import abstractmethod
+import gc
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import model_from_json
@@ -187,9 +188,7 @@ class AbstractFineTuning(AbstractTrFt):
         
         
     def set_callbacks(self, filepath=None):
-        self.callbacks = []
-        if self.model_name == "vgg16_cifar" or self.model_name == "vgg16_cifar_2fc":
-            self.callbacks.append(tf.keras.callbacks.LearningRateScheduler(self.__lr_scheduler__))
+        self.callbacks = [tf.keras.callbacks.LearningRateScheduler(self.__lr_scheduler__)]
     
     
     
@@ -197,15 +196,12 @@ class AbstractFineTuning(AbstractTrFt):
     def validate(self, filename):
         """ Evaluate the model on the evaluation dataset. Filename is the path to the model .h5 """
         self.load_model_from_file(filename)
-        return self.model.evaluate(self.x_evaluation, self.y_evaluation)
-    
-    
-    def load_dataset(self, dataset_name='', model_name='', batch_size=0, to_pad=False, augment_data=False, seed=0):
-        super().load_dataset(dataset_name, model_name, batch_size, to_pad, augment_data, seed)
-        
-        self.x_evaluation, channels = self.__reshape_dataset_to_four_dims__(self.x_evaluation)
-        self.x_evaluation = self.__dataset_to_float__(self.x_evaluation)
-        self.x_evaluation = self.__normalize_dataset__(self.x_evaluation, channels)
-        self.x_evaluation = self.__pad_dataset__(self.x_evaluation, channels, to_pad)
-        
-        self.y_evaluation = tf.keras.utils.to_categorical(self.y_evaluation, self.num_classes)
+        if self.custom_dataset:
+            x_eval = np.load(f"{self.out_evaluation_dir}/x_eval")
+            y_eval = np.load(f"{self.out_evaluation_dir}/y_eval")
+            perfs = self.model.evaluate(x_eval, y_eval)
+            del x_eval, y_eval
+            gc.collect()
+            return perfs
+        else:
+            return self.model.evaluate(self.x_evaluation, self.y_evaluation)

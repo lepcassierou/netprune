@@ -180,7 +180,6 @@ class ScenarioHandler(AbstractHandler):
     def __finish_scenario__(self, mongo, scenario_id, instance_id, instance_status_queue):
         self.info.set_scenario_status_ready(scenario_id)
         mongo.pull_instance_value(instance_id, 'statusQueue', scenario_id)
-        print("Queue status", instance_status_queue)
         if len(instance_status_queue) == 0:
             self.info.set_instance_status_ready(instance_id)
     

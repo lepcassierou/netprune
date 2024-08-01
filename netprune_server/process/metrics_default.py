@@ -1,3 +1,4 @@
+import gc
 import numpy as np
 import os
 
@@ -11,7 +12,7 @@ class MetricsDefault:
         self.norm_data_path = norm_data_path
         self.nb_classes = nb_classes
         self.x_test, self.y_test = test_dataset
-        self.MEMORY_LIMIT = 8000000000 
+        self.MEMORY_LIMIT = 7000000000 
         self.trained_model = trained_model
         
 
@@ -28,6 +29,7 @@ class MetricsDefault:
                 save_metrics_to_db(file.split(".npy", 1)[0], metrics)
                 del norm_data
                 del metrics
+                gc.collect()
                 
                 
     def to_mongo_obj(self, data):
@@ -146,13 +148,9 @@ class MetricsDefault:
 
     def compute_average_per_class(self, indices_all_class, squeezed_data):
         average_per_class = []
-        ind_dims = np.ndim(indices_all_class)
-        if ind_dims == 1:
-            for indices in indices_all_class:
-                nb_indices = len(indices)
-                if nb_indices > 0:
-                    average_values = np.mean(squeezed_data[indices], axis=0)
-                    average_per_class.append(average_values)
-            return np.asarray(average_per_class, dtype=np.float64)
-        else:
-            return None
+        for indices in indices_all_class:
+            nb_indices = len(indices)
+            if nb_indices > 0:
+                average_values = np.mean(squeezed_data[indices], axis=0)
+                average_per_class.append(average_values)
+        return np.asarray(average_per_class, dtype=np.float64)

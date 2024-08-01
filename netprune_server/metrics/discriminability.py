@@ -22,23 +22,19 @@ class Discriminability(DataAwareMetric):
         nb_inst_to_process = self.__compute_nb_instances_to_process__()
         
         # Compute sum of activation_maps to determine one average AM per class
-        ind_dims = np.ndim(indices_all_class)
-        if ind_dims == 1:
-            nb_classes = len(indices_all_class)
-            am_sum = np.zeros((nb_classes, data_shape[1], data_shape[2], data_shape[3]), dtype=np.float64)
-            for num_class in range(nb_classes):
-                step = 0
-                indices = indices_all_class[num_class]
-                while step < len(indices):
-                    max_boundary = min(step + nb_inst_to_process, len(indices))
-                    am_sliced = np.array(self.data[indices[step:max_boundary]], dtype=np.float64)
-                    am_sum[num_class] = np.sum(am_sliced, axis=0)
-                    del am_sliced
-                    step += nb_inst_to_process
-                am_sum[num_class] /= len(indices)
-            return am_sum
-        else:
-            return None
+        nb_classes = len(indices_all_class)
+        am_sum = np.zeros((nb_classes, data_shape[1], data_shape[2], data_shape[3]), dtype=np.float64)
+        for num_class in range(nb_classes):
+            step = 0
+            indices = indices_all_class[num_class]
+            while step < len(indices):
+                max_boundary = min(step + nb_inst_to_process, len(indices))
+                am_sliced = np.array(self.data[indices[step:max_boundary]], dtype=np.float64)
+                am_sum[num_class] = np.sum(am_sliced, axis=0)
+                del am_sliced
+                step += nb_inst_to_process
+            am_sum[num_class] /= len(indices)
+        return am_sum
 
 
     def compute_metric(self, indices_all_class):

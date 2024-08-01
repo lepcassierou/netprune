@@ -228,21 +228,27 @@ class AbstractTrFt(ABC):
             
         (x_train, y_train), (x_test, y_test) = dataset.load_data()
         self.num_classes = np.amax(y_train)+1
-        x_train, y_train = self.cut_eval_dataset(x_train, y_train, self.num_classes, to_pad, self.model_name, test_set_split_ratio)
+        x_train, y_train, x_eval, y_eval = self.cut_eval_dataset(x_train, y_train, self.num_classes, to_pad, self.model_name, test_set_split_ratio)
         
         x_train, channels = self.__reshape_dataset_to_four_dims__(x_train)
         x_test, _ = self.__reshape_dataset_to_four_dims__(x_test)
+        x_eval, _ = self.__reshape_dataset_to_four_dims__(x_eval)
+        
         x_train = self.__dataset_to_float__(x_train)
         x_test = self.__dataset_to_float__(x_test)
+        x_eval = self.__dataset_to_float__(x_eval)
         
         x_train = self.__normalize_dataset__(x_train, channels, is_train_set=True)
         x_test = self.__normalize_dataset__(x_test, channels)
+        x_eval = self.__normalize_dataset__(x_eval, channels)
             
         y_train = tf.keras.utils.to_categorical(y_train, self.num_classes)
         y_test = tf.keras.utils.to_categorical(y_test, self.num_classes)
+        y_eval = tf.keras.utils.to_categorical(y_eval, self.num_classes)
         
         x_train = self.__pad_dataset__(x_train, channels, to_pad)
         x_test = self.__pad_dataset__(x_test, channels, to_pad)
+        x_eval = self.__pad_dataset__(x_eval, channels, to_pad)
         
         if val_split_ratio > 0:
             self.val_split_ratio = val_split_ratio
@@ -264,6 +270,8 @@ class AbstractTrFt(ABC):
         self.val_dataset = val_dataset.batch(self.batch_size)
         self.x_test = x_test
         self.y_test = y_test
+        self.x_evaluation = x_eval
+        self.y_evaluation = y_eval
         print(np.shape(self.x_train), np.shape(self.y_train))
     
     
@@ -342,25 +350,11 @@ class AbstractTrFt(ABC):
         p3 = np.random.RandomState(seed=self.random_seed).permutation(range(len(dataset_y2)))
         dataset_x2 = dataset_x2[p3]
         dataset_y2 = dataset_y2[p3]
-
-        # Format evaluation set
-        dataset_x2, channels = self.__reshape_dataset_to_four_dims__(dataset_x2)
-    
-        #Convert to float
-        dataset_x2 = self.__dataset_to_float__(dataset_x2)
-    
-        #Normalize inputs from [0; 255] to [0; 1]
-        dataset_x2 = self.__normalize_dataset__(dataset_x2, channels)
         
         if model_name != '':
             self.model_name = model_name
 
-        dataset_x2 = self.__pad_dataset__(dataset_x2, channels, to_pad)
-        dataset_y2 = tf.keras.utils.to_categorical(dataset_y2, self.num_classes)
-        self.x_evaluation = dataset_x2
-        self.y_evaluation = dataset_y2
-
-        return dataset_x1, dataset_y1
+        return dataset_x1, dataset_y1, dataset_x2, dataset_y2
     
     
     def __setup_generator__(self,):

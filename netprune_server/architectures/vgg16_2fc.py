@@ -2,8 +2,8 @@ from architectures.abstract_architecture import AbstractArchitecture
 import tensorflow as tf
 
 class VGG16BN(AbstractArchitecture):
-    def __init__(self, input_shape):
-        super().__init__(input_shape)
+    def __init__(self, input_shape, nb_classes):
+        super().__init__(input_shape, nb_classes)
         
         
     def __conv_bn_relu__(self, inputs, filters, kernel_size=3, strides=1, padding='SAME', weight_decay=0.0001, rate=0.4, drop=True):
@@ -52,7 +52,7 @@ class VGG16BN(AbstractArchitecture):
         activation = tf.keras.layers.Activation('relu')(batch_norm)
 
         drop_out2 = tf.keras.layers.Dropout(rate=0.5)(activation)
-        dense2 = tf.keras.layers.Dense(units=10)(drop_out2)
+        dense2 = tf.keras.layers.Dense(units=self.nb_classes)(drop_out2)
         softmax = tf.keras.layers.Activation('softmax')(dense2)
 
         return tf.keras.models.Model(inputs = l0, outputs = softmax)

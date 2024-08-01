@@ -3,6 +3,7 @@ from architectures.lenet5 import Lenet5
 from architectures.lenet300_100 import Lenet300100
 from architectures.lenet4_variant import DynNetSurgLenet5
 from architectures.vgg16_2fc import VGG16BN
+from architectures.cats_dogs_convnet import CatsDogsConvNet
 
 
 class ArchitectureChooser():
@@ -10,19 +11,22 @@ class ArchitectureChooser():
         self.architecture_name = architecture_name
         
         
-    def choose_architecture(self, input_shape):
+    def choose_architecture(self, input_shape, nb_classes):
         model = None
         print(self.architecture_name, input_shape)
         if self.architecture_name == "two-layer":
-            model = TwoConvNet(input_shape)
+            model = TwoConvNet(input_shape, nb_classes)
+        # if self.architecture_name == "cats_dogs_convnet":
+        if self.architecture_name == "custom":
+            model = CatsDogsConvNet(input_shape, nb_classes)
         if self.architecture_name == "lenet5": 
-            model = Lenet5(input_shape)
+            model = Lenet5(input_shape, nb_classes)
         if self.architecture_name == "lenet300-100":
-            model = Lenet300100(input_shape)
+            model = Lenet300100(input_shape, nb_classes)
         if self.architecture_name == "lenet_4_variant":
-            model = DynNetSurgLenet5(input_shape)
+            model = DynNetSurgLenet5(input_shape, nb_classes)
         if self.architecture_name == "vgg16":
-            model = VGG16BN(input_shape)
+            model = VGG16BN(input_shape, nb_classes)
         print("Built architecture", model)
         if model is not None:
             return model.build_architecture()

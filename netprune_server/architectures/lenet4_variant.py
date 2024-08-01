@@ -2,8 +2,8 @@ from architectures.abstract_architecture import AbstractArchitecture
 import tensorflow as tf
 
 class DynNetSurgLenet5(AbstractArchitecture):
-    def __init__(self, input_shape):
-        super().__init__(input_shape)
+    def __init__(self, input_shape, nb_classes):
+        super().__init__(input_shape, nb_classes)
         
     
     def build_architecture(self):
@@ -18,6 +18,6 @@ class DynNetSurgLenet5(AbstractArchitecture):
         flatt = tf.keras.layers.Flatten()(maxpool2)
         fc = tf.keras.layers.Dense(500)(flatt)
         act3 = tf.keras.layers.Activation('relu')(fc)
-        softmax = tf.keras.layers.Dense(10, activation='softmax', name='predictions')(act3)
+        softmax = tf.keras.layers.Dense(self.nb_classes, activation='softmax', name='predictions')(act3)
 
         return tf.keras.models.Model(inputs = l0, outputs = softmax)

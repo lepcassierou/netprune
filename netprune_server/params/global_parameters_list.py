@@ -11,7 +11,7 @@ class AvailableParameters():
     
     @staticmethod
     def get_optimizers():
-        return ['Adadelta', 'Adagrad', 'Adam', 'Adamax', 'Ftrl', 'Nadam', 'Optimizer', 'RMSprop', 'SGD']
+        return ['Adadelta', 'Adagrad', 'Adam', 'Adamax', 'Ftrl', 'Nadam', 'RMSprop', 'SGD']
     
     
     @staticmethod

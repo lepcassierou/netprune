@@ -2,12 +2,14 @@ from abc import ABC, abstractmethod
 from keras_flops import get_flops
 import numpy as np
 import tensorflow as tf
+from tensorflow.keras.callbacks import LearningRateScheduler, ReduceLROnPlateau, EarlyStopping
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import time
 
 from handler.console_information import ConsoleInformation
-from params.available_parameters import AvailableParameters
-from params.default_dataset_params import DefaultDatasetParams
+from params.global_parameters_list import AvailableParameters
+from params.dataset_params import DefaultDatasetParams
+from params.training_scheduler_params import TrainingScheduler
 from process.gpu_setup import GPUSetup
 from process.train_test_steps import TrainStep, TestStep
 
@@ -18,6 +20,7 @@ class AbstractTrFt(ABC):
         GPUSetup.gpu_setup()
         self.init_parameters(dataset_name, model_name, epochs, batch_size, val_split_ratio, optimizer_name, loss_name, metric_name)
         self.console_info = ConsoleInformation()
+        self.train_sched = TrainingScheduler()
         
         
     def init_parameters(self, dataset_name, model_name, epochs, batch_size, val_split_ratio, optimizer_name, loss_name, metric_name):
@@ -142,16 +145,39 @@ class AbstractTrFt(ABC):
         
         
     def set_callbacks(self, filepath=None):
-        # self.callbacks = [tf.keras.callbacks.LearningRateScheduler(self.__lr_scheduler__)]
         self.callbacks = []
+        if self.train_sched.scheduler:
+            lrs = LearningRateScheduler(
+                schedule = self.train_sched.scheduler_fct,
+                verbose = self.train_sched.scheduler_verbose
+                )
+            self.callbacks.append(lrs)
+        if self.train_sched.lr_reduce_on_plateau:
+            rlrop = ReduceLROnPlateau(
+                monitor = self.train_sched.rlrop_monitor, 
+                factor = self.train_sched.rlrop_factor,
+                patience = self.train_sched.rlrop_patience,
+                verbose = self.train_sched.rlrop_verbose,
+                mode = self.train_sched.rlrop_mode,
+                min_delta = self.train_sched.rlrop_min_delta,
+                cooldown = self.train_sched.rlrop_cooldown,
+                min_lr = self.train_sched.rlrop_min_lr,
+                )
+            self.callbacks.append(rlrop)
+        if self.train_sched.early_stopping:
+            es = EarlyStopping(
+                monitor = self.train_sched.es_monitor,
+                min_delta = self.train_sched.es_min_delta,
+                patience = self.train_sched.es_patience,
+                verbose = self.train_sched.es_verbose,
+                mode = self.train_sched.es_mode,
+                baseline = self.train_sched.es_baseline,
+                restore_best_weights = self.train_sched.es_restore_best_weights,
+            )
+            self.callbacks.append(es)
         if filepath is not None:
             self.callbacks.append(tf.keras.callbacks.ModelCheckpoint(filepath, save_best_only=True, save_freq="epoch", monitor='val_loss', mode='auto', ))
         
-        
-    def __lr_scheduler__(self, epoch):
-        learning_rate = 0.1
-        decay = epoch >= self.epochs*0.75 and 2 or epoch >= self.epochs*0.5 and 1 or 0
-        return learning_rate * (0.1**decay)        
         
         
     ####### Save #######
@@ -199,12 +225,10 @@ class AbstractTrFt(ABC):
         
         
     def load_optimizer(self, optimizer_name=''):
-        if optimizer_name == '':
-            optimizer_name = self.optimizer_name
-        else:
+        if optimizer_name != '':
             self.optimizer_name = optimizer_name
-        # self.optimizer = tf.keras.optimizers.get(optimizer_name)
-        self.optimizer = tf.keras.optimizers.Adamax(lr=0.001)
+        self.optimizer = self.train_sched.get_optimizer_from_name(self.optimizer_name)
+        print("Optimizer: ", self.optimizer)
         
         
     def load_loss(self, loss_name=''):

@@ -1,5 +1,4 @@
 import tensorflow as tf
-from tensorflow.python.keras import callbacks as callbacks_module
 from abc import abstractmethod
 
 from process.abstract_tr_ft import AbstractTrFt
@@ -15,10 +14,3 @@ class AbstractTraining(AbstractTrFt):
     @abstractmethod
     def load_architecture(self, model_name=''):
         pass
-        
-        
-    def load_callbacks(self, filepath=None):
-        verbose = 1
-        self.set_callbacks(filepath)
-        self.active_callbacks = callbacks_module.CallbackList(self.callbacks, add_history=True, model=self.model, verbose=verbose, epochs=self.epochs)
-        

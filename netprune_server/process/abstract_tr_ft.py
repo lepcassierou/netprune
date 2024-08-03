@@ -5,6 +5,7 @@ import tensorflow as tf
 from tensorflow.keras.callbacks import LearningRateScheduler, ReduceLROnPlateau, EarlyStopping
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import time
+from tensorflow.python.keras import callbacks as callbacks_module
 
 from handler.console_information import ConsoleInformation
 from params.global_parameters_list import AvailableParameters
@@ -247,9 +248,10 @@ class AbstractTrFt(ABC):
         self.metric = tf.keras.metrics.get(metric_name)
         
     
-    @abstractmethod
     def load_callbacks(self, filepath=None):
-        pass
+        verbose = 1
+        self.set_callbacks(filepath)
+        self.active_callbacks = callbacks_module.CallbackList(self.callbacks, add_history=True, model=self.model, verbose=verbose, epochs=self.epochs)
     
     
     def __load_dataset_from_files__(self, dataset_name, batch_size):

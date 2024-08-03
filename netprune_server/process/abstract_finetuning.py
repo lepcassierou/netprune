@@ -3,7 +3,6 @@ import gc
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import model_from_json
-from tensorflow.python.keras import callbacks as callbacks_module
 
 from process.abstract_tr_ft import AbstractTrFt
 
@@ -177,18 +176,6 @@ class AbstractFineTuning(AbstractTrFt):
                         self.__process_first_weighted_layers__(old_weights, ref_layer, layer, union_filters_list, filters_indices_all_layers, layer_index, curr_paramd_layer_index, config)
                     else:
                         self.__process_other_weighted_layers__(old_weights, ref_layer, layer, union_filters_list, filters_indices_all_layers, layer_index, curr_paramd_layer_index, config)
-    
-    
-    
-    ####### Load #######
-    def load_callbacks(self, filepath=None):
-        verbose = 1
-        self.set_callbacks(filepath=filepath)
-        self.active_callbacks = callbacks_module.CallbackList(self.callbacks, add_history=True, model=self.model, verbose=verbose, epochs=self.epochs)
-        
-        
-    def set_callbacks(self, filepath=None):
-        self.callbacks = [tf.keras.callbacks.LearningRateScheduler(self.__lr_scheduler__)]
     
     
     

@@ -71,7 +71,7 @@ class ScenarioHandler(AbstractHandler):
         self.info.update_test_metrics(scenario_id, evaluation)
         
         
-    def __extract_model_graph__(self, mongo, training_obj, scenario_id, tmp_instance_id, tmp_scenario_id, tmp_user_id):
+    def __extract_model_graph__(self, mongo, training_obj, scenario_id, tmp_instance_id, tmp_scenario_id):
         mongo.set_scenario_value(scenario_id, 'message', "Extracting the model's layers...")
         self.info.extracting_model_layers(scenario_id)
         layers_nodes, layers_edges = training_obj.save_config()
@@ -84,7 +84,6 @@ class ScenarioHandler(AbstractHandler):
         for layer in layers_nodes:
             layer['instanceId'] = tmp_instance_id
             layer['scenarioId'] = tmp_scenario_id
-            layer['userId'] = tmp_user_id
             tmp = mongo.insert_layer(layer)
             nodes.append(str(tmp))
             layers_map[layer['name']] = str(tmp)
@@ -209,7 +208,7 @@ class ScenarioHandler(AbstractHandler):
         
         self.__evaluate_model_test__(tr, model_path, scenario_id)
         
-        model_graph = self.__extract_model_graph__(mongo, tr, scenario_id, tmp_instance_id, tmp_scen['_id'], tmp_scen['userId'])
+        model_graph = self.__extract_model_graph__(mongo, tr, scenario_id, tmp_instance_id, tmp_scen['_id'])
         
         if not is_training_finished:
             return self.__training_interrupted__(mongo, tmp_instance_id, scenario_id, tmp_inst['statusQueue'])
@@ -263,7 +262,6 @@ class ScenarioHandler(AbstractHandler):
         root_path = os.getcwd()
         model_path = f"{root_path}/models/{ref_instance_id}/{ref_scenario_id}/{ref_scenario_id}.h5"
         
-        # TODO: Implement that function
         self.__build_netw_archi_from_reference__(mongo, ft, model_path, ref_scenario_id, new_scenario_id)
 
         dest_path = f"models/{finetuned_scen['instanceId']}/{new_scenario_id}"
@@ -274,7 +272,7 @@ class ScenarioHandler(AbstractHandler):
         ft.load_callbacks(filepath=new_model_path)
         ft.compile_model()
         
-        model_graph = self.__extract_model_graph__(mongo, ft, new_scenario_id, finetuned_scen['instanceId'], finetuned_scen['_id'], finetuned_scen['userId'])
+        model_graph = self.__extract_model_graph__(mongo, ft, new_scenario_id, finetuned_scen['instanceId'], finetuned_scen['_id'])
         
         is_training_finished = self.__finetune_model__(mongo, ft, new_scenario_id, new_model_path, dest_path, finetuned_scen['epochs'])
         self.__evaluate_model_test__(ft, new_model_path, new_scenario_id)

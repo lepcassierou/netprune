@@ -49,6 +49,14 @@ def scenario_inheritance_route(id1, id2):
 def scenario_deletion_route(instanceid, scenarioid):
     return make_response(request_handler.scenario_deletion({'instance_id': instanceid, 'scenario_id': scenarioid}))
 
+
+@app.route('/scenario/redoTesting/<scenarioId>')
+def scenario_redo_testing(scenarioId):
+    return make_response({
+            "statusCode": 500,
+            "body": False,
+        })
+
 if __name__ == '__main__':
     app.run(host=config['flask']['host'],
         port=int(config['flask']['port']),

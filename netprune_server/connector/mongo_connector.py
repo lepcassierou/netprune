@@ -24,7 +24,6 @@ class Mongo:
         return self.db.instances.find_one({ "_id": instance_id })
 
     def set_instance_value(self, instance_id, field, value):
-        d = datetime.datetime.now(datetime.timezone.utc)
         self.db.instances.update_one({ "_id": instance_id }, { "$set": { field: value, "version": self.get_now()} })
 
     def push_instance_value(self, instance_id, field, value):

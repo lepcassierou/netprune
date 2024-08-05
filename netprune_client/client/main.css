@@ -14,9 +14,6 @@ body {
   padding: 0px !important;
   height: 100%;
 }
-.login-form {
-  margin-top: 1rem;
-}
 
 .content-container {
   padding: 16px;
@@ -32,7 +29,8 @@ body {
   padding-right: 0px !important;
   border-right-width: 3px !important;
   border-right-style: ridge !important;
-  border-right-color: #3f51b5 !important;
+  /* border-right-color: #3f51b5 !important; */
+  border-right-color: #34425a !important;
 }
 .vtab {
   width: 30px !important;
@@ -284,4 +282,25 @@ body {
 
 .Mui-disabled .MuiIconButton-label {
   color:rgba(0, 0, 0, 0.26);
+}
+
+.MuiAppBar-colorPrimary {
+  color: #fff;
+  background-color: #34425a !important;
+}
+
+.MuiButton-containedPrimary {
+  background-color: #34425a !important;
+}
+
+.MuiContainer-root {
+  background-color: #e9edf2 !important;
+}
+
+.MuiCardHeader-root {
+  background-color: #f1f4f9 !important;
+}
+
+.MuiPaper-root {
+  box-shadow: "5px 10px red"  !important;
 }

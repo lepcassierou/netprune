@@ -1,8 +1,8 @@
-
-
 # Server side
 
-1. _[netprune_server/install.sh](netprune_server/install.sh)_: Create a python virtual environment and install dependancies. 
+0. Open a first terminal.
+
+1. _[netprune_server/install.sh](netprune_server/install.sh)_: Create a python virtual environment and install dependancies: 
 
 ```
 cd netprune_server
@@ -14,6 +14,7 @@ sh run.sh
 
 # Client side
 
+0. Open a second terminal. 
 
 ## Installation
 

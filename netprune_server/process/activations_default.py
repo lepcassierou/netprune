@@ -1,5 +1,5 @@
 import numpy as np
-from keract import get_activations
+import tensorflow as tf
 
 from process.model_graph import * 
 
@@ -58,24 +58,21 @@ class ActivationsDefault:
     def compute_activations_single_layer(self, repository, true_layer_name, layer, layer_filename):
         layer_name = layer.name
         if self.is_output_desired(true_layer_name):
-            # print("Activations of layer : ", layer_name, layer.output_shape)
             # 1) Extract the activations
             instances_shape = (self.x_test.shape[0], *[i for i in layer.output_shape[1:]])
-            # print("Instances_shape : ", instances_shape)
-            instances = np.ndarray(instances_shape, dtype=np.float64)
+            instances = np.ndarray(instances_shape, dtype=np.float32)
             start = 0
             step = 200
             stop = len(self.x_test)
+            tmp_submodel = tf.keras.Model(inputs = self.model.layers[0].input, outputs = layer.output)
             while start < stop:
-                keract_inputs = self.x_test[start:min(start+step, stop)]
-                instances[start:min(start+step, stop)] = get_activations(model=self.model, x=keract_inputs, layer_names=layer_name).get(layer_name)
+                data_to_activ = self.x_test[start:min(start+step, stop)]
+                instances[start:min(start+step, stop)] = tmp_submodel(data_to_activ)
                 start += step
 
-            # print("Extraction DONE")
             # 2) Normalize activations per layer
-            # Compute the number max of instances to treat at a 
-            # time according to the memory capacities
-            nb_data = 64 # Type : Float64
+            # Compute the number max of instances to process at a time according to the memory capacities
+            nb_data = 32
             shape = np.shape(instances)
             dims = len(shape)
             for length in range(1, dims):
@@ -83,7 +80,7 @@ class ActivationsDefault:
 
             min_val = []
             max_val = []
-            memory_limit = 8000000000
+            memory_limit = 7000000000
             nb_inst_to_process = memory_limit // nb_data
             step = 0
             while step < shape[0]:
@@ -124,7 +121,7 @@ class ActivationsDefault:
             # Write instances to files
             print("DB_NAME : ", layer_name, " ", layer_filename)
             if layer_filename is None:
-                print("The activation maps of the layer : ", layer_name, " could not be saved because the layer does not exist.")
+                raise ValueError("The activation maps of the layer : ", layer_name, " could not be saved because the layer does not exist.")
             else:
                 np.save(repository + layer_filename, instances)
 

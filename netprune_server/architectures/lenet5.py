@@ -2,8 +2,8 @@ from architectures.abstract_architecture import AbstractArchitecture
 import tensorflow as tf
 
 class Lenet5(AbstractArchitecture):
-    def __init__(self, input_shape):
-        super().__init__(input_shape)
+    def __init__(self, input_shape, nb_classes):
+        super().__init__(input_shape, nb_classes)
         
     
     def build_architecture(self):
@@ -19,6 +19,6 @@ class Lenet5(AbstractArchitecture):
         c9 = tf.keras.layers.Activation('relu')(c8)
         c10 = tf.keras.layers.Dense(84)(c9)
         c11 = tf.keras.layers.Activation('relu')(c10)
-        c12 = tf.keras.layers.Dense(10, activation='softmax', name='predictions')(c11)
+        c12 = tf.keras.layers.Dense(self.nb_classes, activation='softmax', name='predictions')(c11)
 
         return tf.keras.models.Model(inputs = c0, outputs = c12)

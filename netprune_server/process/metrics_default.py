@@ -1,3 +1,4 @@
+import gc
 import numpy as np
 import os
 
@@ -11,7 +12,7 @@ class MetricsDefault:
         self.norm_data_path = norm_data_path
         self.nb_classes = nb_classes
         self.x_test, self.y_test = test_dataset
-        self.MEMORY_LIMIT = 8000000000 
+        self.MEMORY_LIMIT = 7000000000 
         self.trained_model = trained_model
         
 
@@ -28,6 +29,7 @@ class MetricsDefault:
                 save_metrics_to_db(file.split(".npy", 1)[0], metrics)
                 del norm_data
                 del metrics
+                gc.collect()
                 
                 
     def to_mongo_obj(self, data):
@@ -122,10 +124,10 @@ class MetricsDefault:
 
         # Compute sum of data along axis 1 and 2, by chunk
         step = 0
-        data_sum = np.zeros((shape[0], shape[-1]), dtype=np.float64)
+        data_sum = np.zeros((shape[0], shape[-1]), dtype=np.float32)
         while step < shape[0]:
             max_boundary = min(step + nb_inst_to_process, shape[0])
-            data_sliced = np.asarray(data[step:max_boundary], dtype=np.float64)
+            data_sliced = np.asarray(data[step:max_boundary], dtype=np.float32)
             data_sum[step:max_boundary] = np.sum(data_sliced, axis=(1,2))
             step += nb_inst_to_process
         return data_sum / activations_count
@@ -146,13 +148,9 @@ class MetricsDefault:
 
     def compute_average_per_class(self, indices_all_class, squeezed_data):
         average_per_class = []
-        ind_dims = np.ndim(indices_all_class)
-        if ind_dims == 1:
-            for indices in indices_all_class:
-                nb_indices = len(indices)
-                if nb_indices > 0:
-                    average_values = np.mean(squeezed_data[indices], axis=0)
-                    average_per_class.append(average_values)
-            return np.asarray(average_per_class, dtype=np.float64)
-        else:
-            return None
+        for indices in indices_all_class:
+            nb_indices = len(indices)
+            if nb_indices > 0:
+                average_values = np.mean(squeezed_data[indices], axis=0)
+                average_per_class.append(average_values)
+        return np.asarray(average_per_class, dtype=np.float32)

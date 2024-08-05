@@ -2,8 +2,8 @@ from architectures.abstract_architecture import AbstractArchitecture
 import tensorflow as tf
 
 class TwoConvNet(AbstractArchitecture):
-    def __init__(self, input_shape):
-        super().__init__(input_shape)
+    def __init__(self, input_shape, nb_classes):
+        super().__init__(input_shape, nb_classes)
         
         
     def __conv_bn_relu__(self, inputs, filters, kernel_size=3, strides=1, padding='SAME', rate=0.4, drop=True):
@@ -25,7 +25,7 @@ class TwoConvNet(AbstractArchitecture):
         max_pooling2 = tf.keras.layers.MaxPooling2D(pool_size=(2, 2))(conv2)
         
         flat = tf.keras.layers.Flatten()(max_pooling2)
-        dense = tf.keras.layers.Dense(units=10)(flat)
+        dense = tf.keras.layers.Dense(units=self.nb_classes)(flat)
         softmax = tf.keras.layers.Activation('softmax')(dense)
 
         return tf.keras.models.Model(inputs = l0, outputs = softmax)

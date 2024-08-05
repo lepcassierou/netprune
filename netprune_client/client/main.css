@@ -1,0 +1,306 @@
+body {
+  padding: 0px;
+  margin: 0px;
+  height: 100vh;
+  font-family: sans-serif;
+}
+#react-target {
+  padding: 0px;
+  margin: 0px;
+  height: 100vh;
+}
+.root-container {
+  margin: 0px !important;
+  padding: 0px !important;
+  height: 100%;
+}
+
+.content-container {
+  padding: 16px;
+}
+
+.dense-action.MuiCardHeader-root .MuiCardHeader-action {
+  margin-right: 5px;
+  margin-top: 5px;
+}
+
+.vtab-active {
+  width: 30px !important;
+  padding-right: 0px !important;
+  border-right-width: 3px !important;
+  border-right-style: ridge !important;
+  /* border-right-color: #3f51b5 !important; */
+  border-right-color: #34425a !important;
+}
+.vtab {
+  width: 30px !important;
+  padding-right: 2px !important;
+  border-right-width: 1px !important;
+  border-right-style: solid !important;
+  border-right-color: rgba(0, 0, 0, 0.87) !important;
+}
+
+/***** BUTTON *****/
+/* ref: 500, 700, 300
+/* text color */
+.success.MuiButton-root .MuiButton-label {
+  color: #4caf50;
+}
+.success.MuiButton-contained .MuiButton-label {
+  color: #fff;
+}
+/* base */
+.success.MuiButton-contained {
+  background-color: #4caf50;
+}
+.success.MuiButton-outlined {
+  border-color: #81c784;
+}
+.success.MuiButton-outlined:hover {
+  border-color: #4caf50;
+}
+  /* ripple color */
+.success.MuiButton-root:hover {
+  color: #388e3c;
+  background-color: #388e3c10; /* */
+}
+.success.MuiButton-contained:hover {
+  color: #fff;
+  background-color: #388e3c; /* */
+}
+
+.danger.MuiButton-root .MuiButton-label {
+  color: #f44336;
+}
+.danger.MuiButton-contained .MuiButton-label {
+  color: #fff;
+}
+/* base */
+.danger.MuiButton-contained {
+  background-color: #f44336;
+}
+.danger.MuiButton-outlined {
+  border-color: #d32f2f;
+}
+.danger.MuiButton-outlined:hover {
+  border-color: #f44336;
+}
+  /* ripple color */
+.danger.MuiButton-root:hover {
+  color: #d32f2f;
+  background-color: #d32f2f10; /* */
+}
+.danger.MuiButton-contained:hover {
+  color: #fff;
+  background-color: #d32f2f; /* */
+}
+
+.warning.MuiButton-root .MuiButton-label {
+  color: #ffc107;
+}
+.warning.MuiButton-contained .MuiButton-label {
+  color: #000;
+}
+/* base */
+.warning.MuiButton-contained {
+  background-color: #ffc107;
+}
+.warning.MuiButton-outlined {
+  border-color: #ffc107;
+}
+.warning.MuiButton-outlined:hover {
+  border-color: #ffa000;
+}
+  /* ripple color */
+.warning.MuiButton-root:hover {
+  color: #ffa000;
+  background-color: #ffa00010; /* */
+}
+.warning.MuiButton-contained:hover {
+  color: #fff;
+  background-color: #ffa000; /* */
+}
+
+.info.MuiButton-root .MuiButton-label {
+  color: #03a9f4;
+}
+.info.MuiButton-contained .MuiButton-label {
+  color: #fff;
+}
+/* base */
+.info.MuiButton-contained {
+  background-color: #03a9f4;
+}
+.info.MuiButton-outlined {
+  border-color: #4fc3f7;
+}
+.info.MuiButton-outlined:hover {
+  border-color: #03a9f4;
+}
+  /* ripple color */
+.info.MuiButton-root:hover {
+  color: #0288d1;
+  background-color: #0288d110; /* */
+}
+.info.MuiButton-contained:hover {
+  color: #fff;
+  background-color: #0288d1; /* */
+}
+
+.MuiButton-root.Mui-disabled .MuiButton-label {
+  color: rgba(0, 0, 0, 0.26);
+}
+.MuiButton-contained.Mui-disabled .MuiButton-label {
+  color: rgba(0, 0, 0, 0.26);
+}
+/* base */
+.MuiButton-contained.Mui-disabled {
+  background-color: rgba(0, 0, 0, 0.12);
+}
+.MuiButton-outlined.Mui-disabled {
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+
+/***** CHIP *****/
+.success .MuiChip-label {
+  color: #fff;
+}
+.success.MuiChip-outlined .MuiChip-label {
+  color: #4caf50;
+}
+.success .MuiChip-icon {
+  color: #fff;
+}
+.success.MuiChip-outlined .MuiChip-icon {
+  color: #4caf50;
+}
+.success.MuiChip-root {
+  background-color: #4caf50;
+}
+.success.MuiChip-outlined {
+  border-color: #4caf50;
+  background-color: #00000000;
+}
+
+.danger .MuiChip-label {
+  color: #fff;
+}
+.danger.MuiChip-outlined .MuiChip-label {
+  color: #f44336;
+}
+.danger .MuiChip-icon {
+  color: #fff;
+}
+.danger.MuiChip-outlined .MuiChip-icon {
+  color: #f44336;
+}
+.danger.MuiChip-root {
+  background-color: #f44336;
+}
+.danger.MuiChip-outlined {
+  border-color: #f44336;
+  background-color: #00000000;
+}
+
+.warning .MuiChip-label {
+  color: #000;
+}
+.warning.MuiChip-outlined .MuiChip-label {
+  color: #ffc107;
+}
+.warning .MuiChip-icon {
+  color: #000;
+}
+.warning.MuiChip-outlined .MuiChip-icon {
+  color: #ffc107;
+}
+.warning.MuiChip-root {
+  background-color: #ffc107;
+}
+.warning.MuiChip-outlined {
+  border-color: #ffc107;
+  background-color: #00000000;
+}
+
+.info .MuiChip-label {
+  color: #000;
+}
+.info.MuiChip-outlined .MuiChip-label {
+  color: #00bcd4;
+}
+.info .MuiChip-icon {
+  color: #000;
+}
+.info.MuiChip-outlined .MuiChip-icon {
+  color: #00bcd4;
+}
+.info.MuiChip-root {
+  background-color: #00bcd4;
+}
+.info.MuiChip-outlined {
+  border-color: #00bcd4;
+  background-color: #00000000;
+}
+
+
+/***** ICONBUTTON *****/
+/* color ref: 500 */
+  /* icon color */
+.success .MuiIconButton-label {
+  color: #4caf50;
+}
+  /* ripple color */
+.success.MuiIconButton-root:hover {
+  color: #4caf50;
+  background-color: #4caf500a;
+}
+
+.warning .MuiIconButton-label{
+  color: #ffc107;
+}
+.warning.MuiIconButton-root:hover {
+  color: #ffc107;
+  background-color: #ffc1070a;
+}
+
+.info .MuiIconButton-label {
+  color: #00bcd4;
+}
+.info.MuiIconButton-root:hover {
+  color: #00bcd4;
+  background-color: #00bcd40a;
+}
+
+.danger .MuiIconButton-label {
+  color: #f44336;
+}
+.danger.MuiIconButton-root:hover {
+  background-color: #f443360a;
+  color: #f44336;
+}
+
+.Mui-disabled .MuiIconButton-label {
+  color:rgba(0, 0, 0, 0.26);
+}
+
+.MuiAppBar-colorPrimary {
+  color: #fff;
+  background-color: #34425a !important;
+}
+
+.MuiButton-containedPrimary {
+  background-color: #34425a !important;
+}
+
+.MuiContainer-root {
+  background-color: #e9edf2 !important;
+}
+
+.MuiCardHeader-root {
+  background-color: #f1f4f9 !important;
+}
+
+.MuiPaper-root {
+  box-shadow: "5px 10px red"  !important;
+}

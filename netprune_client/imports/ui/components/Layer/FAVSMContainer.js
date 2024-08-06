@@ -201,7 +201,7 @@ class FAVSMContainer extends React.Component {
                 < Grid
                     item
                     xs={xs_sm}
-                    style={{ height: "250%" }}
+                    style={{ height: "100%" }}
                 >
                     <Card variant="outlined" style={{ height: "100%" }}>
                         <CardHeader

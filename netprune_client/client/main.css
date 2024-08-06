@@ -4,7 +4,7 @@ body {
   height: 100vh;
   font-family: sans-serif;
 }
-#react-target {
+#root {
   padding: 0px;
   margin: 0px;
   height: 100vh;

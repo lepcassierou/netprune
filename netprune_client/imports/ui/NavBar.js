@@ -1,6 +1,4 @@
 import React from 'react';
-import { Meteor } from 'meteor/meteor';
-import { withTracker } from 'meteor/react-meteor-data';
 
 import AppBar from '@material-ui/core/AppBar';
 import IconButton from '@material-ui/core/IconButton';
@@ -27,15 +25,4 @@ class NavBar extends React.Component {
   }
 }
 
-export default withTracker(() => {
-  const user = Meteor.user();
-
- if (!user) {
-    return {
-      user: undefined,
-    }
-  }
-  return {
-    user
-  }
-})(NavBar);
+export default NavBar;

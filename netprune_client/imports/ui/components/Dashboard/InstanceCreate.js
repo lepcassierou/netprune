@@ -18,9 +18,9 @@ export default class InstanceCreate extends React.Component {
   constructor (props) {
     super(props);
 
-    this.datasets = ['boston_housing', 'cifar100', 'imdb', 'reuters', 'cifar10', 'fashion_mnist', 'mnist', 'cats_vs_dogs', 'leaks', 'pointcloud']
-    this.models = ['lenet5', 'lenet300-100', 'lenet_4_variant', 'vgg16', 'vgg16_cifar', 'vgg16_cifar_2fc', 'vgg19', 'resnet50', 'two-layer', 'cvsd_conv', 'custom', "vgg16_leaks", "pcednet"];
-    this.optimizers = ['Adadelta', 'Adagrad', 'Adam', 'Adamax', 'Ftrl', 'Nadam', 'Optimizer', 'RMSprop', 'SGD']
+    this.datasets = ['cifar10', 'fashion_mnist', 'mnist', 'cats_vs_dogs']
+    this.models = ['lenet5', 'lenet300-100', 'lenet_4_variant', 'vgg16', 'two-layer'];
+    this.optimizers = ['Adadelta', 'Adagrad', 'Adam', 'Adamax', 'Ftrl', 'Nadam', 'RMSprop', 'SGD']
     this.losses = ['BinaryCrossentropy', 'CategoricalCrossentropy', 'CategoricalHinge', 'CosineSimilarity',
       'Hinge', 'Huber', 'KLD', 'KLDivergence', 'LogCosh', 'Loss', 'MAE', 'MAPE', 'MSE', 'MSLE',
       'MeanAbsoluteError', 'MeanAbsolutePercentageError', 'MeanSquaredError', 'MeanSquaredLogarithmicError',
@@ -35,14 +35,13 @@ export default class InstanceCreate extends React.Component {
       'SpecificityAtSensitivity', 'SquaredHinge', 'Sum', 'TopKCategoricalAccuracy', 'TrueNegatives', 'TruePositives']
     this.state = {
       name: '',
-      dataset: 'leaks',
-      model: 'vgg16_leaks',
+      dataset: 'mnist',
+      model: 'lenet5',
       optimizer: 'Adam',
       loss: 'CategoricalCrossentropy',
       metric: 'CategoricalAccuracy',
       epochs: 1, 
       batchSize: 128, 
-      shuffleBufferSize: 1024, 
       validationSplitRatio: 0.1,
     }
 
@@ -54,7 +53,6 @@ export default class InstanceCreate extends React.Component {
     this.handleMetricChange = this.handleMetricChange.bind(this)
     this.handleEpochsChange = this.handleEpochsChange.bind(this);
     this.handleBatchSizeChange = this.handleBatchSizeChange.bind(this);
-    this.handleShuffleBufferSizeChange = this.handleShuffleBufferSizeChange.bind(this);
     this.handleValidationSplitRatioChange = this.handleValidationSplitRatioChange.bind(this);
     this.handleCreate = this.handleCreate.bind(this);
     this.handleCancel = this.handleCancel.bind(this);
@@ -83,23 +81,19 @@ export default class InstanceCreate extends React.Component {
   handleBatchSizeChange(e) {
     this.setState({ batchSize: Math.floor(Number(e.target.value)) })
   }
-  handleShuffleBufferSizeChange(e) {
-    this.setState({ shuffleBufferSize: Math.floor(Number(e.target.value)) })
-  }
   handleValidationSplitRatioChange(e) {
     this.setState({ validationSplitRatio: Number(e.target.value) })
   }
   handleCreate(e) {
     e.preventDefault();
     this.props.valid(this.state.name, this.state.model, this.state.dataset, this.state.optimizer,
-      this.state.loss, this.state.metric, this.state.epochs, this.state.batchSize,
-      this.state.shuffleBufferSize, this.state.validationSplitRatio)
+      this.state.loss, this.state.metric, this.state.epochs, this.state.batchSize, this.state.validationSplitRatio)
   }
   handleCancel(e) {
     e.preventDefault();
     this.props.cancel()
   }
-  //datasetName, optimizerName, lossName, metricName, epochs, batchSize, shuffleBufferSize, validationSplitRatio) {
+  //datasetName, optimizerName, lossName, metricName, epochs, batchSize, validationSplitRatio) {
   render() {
     return (
       <Card variant="outlined">
@@ -227,17 +221,6 @@ export default class InstanceCreate extends React.Component {
                 label="Batch Size"
                 onChange={this.handleBatchSizeChange}
                 value={this.state.batchSize}
-              />
-            </Grid>
-            <Grid item xs={3}>
-              <TextField
-                size="small"
-                variant="outlined"
-                type="number"
-                fullWidth
-                label="Shuffle Buffer Size"
-                onChange={this.handleShuffleBufferSizeChange}
-                value={this.state.shuffleBufferSize}
               />
             </Grid>
             <Grid item xs={3}>

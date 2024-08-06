@@ -107,12 +107,6 @@ class InstanceDetails extends React.Component {
               </TableRow>
               <TableRow>
                 <TableCell>
-                  <strong>Shuffle buffer size</strong>
-                </TableCell>
-                <TableCell align="right">{this.props.instance.shuffleBufferSize.toString()}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>
                   <strong>Validation split ratio</strong>
                 </TableCell>
                 <TableCell align="right">{this.props.instance.validationSplitRatio.toString()}</TableCell>

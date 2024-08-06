@@ -2,7 +2,7 @@ import { check } from 'meteor/check';
 import { InstanceCollection } from '../db/InstanceCollection';
 
 Meteor.methods({
-  'instances.insert'(name, modelName, datasetName, optimizerName, lossName, metricName, epochs, batchSize, shuffleBufferSize, validationSplitRatio) {
+  'instances.insert'(name, modelName, datasetName, optimizerName, lossName, metricName, epochs, batchSize, validationSplitRatio) {
     check(name, String);
     check(modelName, String);
     check(datasetName, String);
@@ -11,7 +11,6 @@ Meteor.methods({
     check(metricName, String);
     check(epochs, Number);
     check(batchSize, Number);
-    check(shuffleBufferSize, Number);
     check(validationSplitRatio, Number);
 
     InstanceCollection.insert({
@@ -23,7 +22,6 @@ Meteor.methods({
       metricName,
       epochs,
       batchSize, 
-      shuffleBufferSize, 
       validationSplitRatio,
       createdAt: new Date,
       version: new Date,

@@ -21,8 +21,8 @@ export default class Dashboard extends React.Component {
     this.toggleNewInstanceDialog = this.toggleNewInstanceDialog.bind(this);
     this.handleCreateNewInstance = this.handleCreateNewInstance.bind(this);
   }
-  handleCreateNewInstance(name, model, dataset, optimizer,loss, metric, epochs, batchSize, shuffleBufferSize, validationSplitRatio) {
-    Meteor.call('instances.insert', name, model, dataset, optimizer, loss, metric, epochs, batchSize, shuffleBufferSize, validationSplitRatio)
+  handleCreateNewInstance(name, model, dataset, optimizer,loss, metric, epochs, batchSize, validationSplitRatio) {
+    Meteor.call('instances.insert', name, model, dataset, optimizer, loss, metric, epochs, batchSize, validationSplitRatio)
     this.toggleNewInstanceDialog()
   }
   toggleNewInstanceDialog() {

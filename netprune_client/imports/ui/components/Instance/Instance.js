@@ -82,7 +82,7 @@ class Instance extends React.Component {
 
   render() {
     let xs_scenario = 10;
-    if(fullScreen){
+    if (fullScreen) {
       let fullScreen = false;
       xs_scenario = 12;
     }
@@ -144,12 +144,6 @@ class Instance extends React.Component {
                 instanceId={this.props.instanceId}
                 open={this.openScenario}
               />
-              {/* TODO: Replace that in case it does not work */}
-              {/* <ExplorationTree
-                ref={this.scenarioGraph}
-                instanceId={this.props.instanceId}
-                open={this.openScenario}
-              /> */}
             </Card>
           </Grid>
 
@@ -257,41 +251,22 @@ class Instance extends React.Component {
     );
   }
 }
+
+
 export default withTracker((params) => {
-  let instanceId = params.match.params.id;
+  let instanceId = params.id;
   Meteor.subscribe('instanceById', instanceId);
   const instance = InstanceCollection.findOne(instanceId);
-  let english = false;
   var datasetLabelsList = [];
   for (let i = 0; i < 10; ++i)
     datasetLabelsList.push(i);
   if (!!instance) {
     if (instance.datasetName == "fashion_mnist") {
-      if(english){
-        datasetLabelsList = ["T-shirt/top", "Trouser", "Pullover", "Dress", "Coat", "Sandal", "Shirt", "Sneaker", "Bag", "Ankle boot"];
-      } else {
-        datasetLabelsList = ["T-shirt", "Pantalon", "Pull", "Robe", "Manteau", "Sandale", "Chemise", "Basket", "Sac", "Bottine"];
-      }
+      datasetLabelsList = ["T-shirt/top", "Trouser", "Pullover", "Dress", "Coat", "Sandal", "Shirt", "Sneaker", "Bag", "Ankle boot"];
     } else if (instance.datasetName == "cifar10") {
-      if(english){
-        datasetLabelsList = ["Airplane", "Automobile", "Bird", "Cat", "Deer", "Dog", "Frog", "Horse", "Ship", "Truck"];
-      } else {
-        datasetLabelsList = ["Avion", "Voiture", "Oiseau", "Chat", "Cerf", "Chien", "Grenouille", "Cheval", "Bateau", "Camion"];
-      }
+      datasetLabelsList = ["Airplane", "Automobile", "Bird", "Cat", "Deer", "Dog", "Frog", "Horse", "Ship", "Truck"];
     } else if (instance.datasetName == "cats_vs_dogs") {
-      if(english){
-        datasetLabelsList = ["Cat", "Dog"];
-      } else {
-        datasetLabelsList = ["Chat", "Chien"];
-      }
-    } else if (instance.datasetName == "leaks") {
-      if(english){
-        datasetLabelsList = ["Not leak", "Leak"];
-      } else {
-        datasetLabelsList = ["Intact", "Fuite"];
-      }
-    } else if (instance.datasetName == "pointcloud") {
-      datasetLabelsList = ["0", "1", "2"];
+      datasetLabelsList = ["Cat", "Dog"];
     }
   }
 

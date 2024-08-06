@@ -13,7 +13,6 @@ class ArchitectureChooser():
         
     def choose_architecture(self, input_shape, nb_classes):
         model = None
-        print(self.architecture_name, input_shape)
         if self.architecture_name == "two-layer":
             model = TwoConvNet(input_shape, nb_classes)
         # if self.architecture_name == "cats_dogs_convnet":

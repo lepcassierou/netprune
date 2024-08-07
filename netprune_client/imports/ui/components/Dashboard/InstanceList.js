@@ -23,7 +23,7 @@ import DialogSimple from '../DialogSimple';
 import InstanceDetails from './InstanceDetails';
 
 class InstanceList extends React.Component {
-  constructor (props) {
+  constructor(props) {
     super(props);
 
     this.state = {
@@ -39,9 +39,9 @@ class InstanceList extends React.Component {
   toggleDetails(inst) {
     this.setState((prevState) => {
       if (prevState.currentInstance === inst) {
-        return {currentInstance: ''}
+        return { currentInstance: '' }
       }
-      return {currentInstance: inst}
+      return { currentInstance: inst }
     })
   }
   toggleDialogDelete(inst) {
@@ -69,10 +69,10 @@ class InstanceList extends React.Component {
     }
     return (
       <Box>
-        {this.state.dialogDeleteOpened?
-          <DialogSimple 
+        {this.state.dialogDeleteOpened ?
+          <DialogSimple
             className="danger"
-            title="Delete instance" 
+            title="Delete instance"
             content="You are about to permanently delete this instance. Do you wish to continue?"
             icon={<DeleteIcon />}
             confirm="Yes, delete."
@@ -100,10 +100,10 @@ class InstanceList extends React.Component {
                   }
                 />
                 <ListItemSecondaryAction>
-                  <Chip 
+                  <Chip
                     label={instance.status.toUpperCase()}
-                    icon={instance.status === 'busy'? <CircularProgress size={10} disableShrink/> : null}
-                    className={instance.status === 'ready'? 'success' : 'warning'}
+                    icon={instance.status === 'busy' ? <CircularProgress size={10} disableShrink /> : null}
+                    className={instance.status === 'ready' ? 'success' : 'warning'}
                     disabled
                   />
                   <Tooltip title="Open instance" arrow>
@@ -134,7 +134,7 @@ class InstanceList extends React.Component {
                   </Tooltip>
                 </ListItemSecondaryAction>
               </ListItem>
-              {this.state.currentInstance === instance._id?
+              {this.state.currentInstance === instance._id ?
                 <InstanceDetails instanceId={instance._id} />
                 : null
               }

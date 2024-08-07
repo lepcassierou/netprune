@@ -103,11 +103,6 @@ let renderNode = memoize(function (ele) {
 })
 
 let renderEdge = memoize2(function (ele) {
-  // let edgeStr = "";
-  // ele.data().selection.forEach((layerName, layerIndex) => {
-  //   edgeStr += layerName + ":" + ele.data().oldFilters[layerIndex] + "-" + ele.data().newFilters[layerIndex] + ", ";
-  // });
-  // return edgeStr.substr(0, edgeStr.length-2);
   return ""
 })
 
@@ -136,41 +131,12 @@ class ScenarioGraph extends React.Component {
         this.props.instance.scenarioEdges.forEach((edge) => {
           if (this.props.scenarios.findIndex((v) => v._id === edge.source) > -1
             && this.props.scenarios.findIndex((v) => v._id === edge.target) > -1) {
-            // Meteor.call('finetuning_filters.findSelectionByIds',
-            //   this.props.instanceId,
-            //   edge.source,
-            //   edge.target,
-            //   (error, response) => {
-            //     if (error) {
-            //       throw new Meteor.Error('ERROR printing fine-tuning filters is impossible.');
-            //     } else {
-            //       let data = edge
-            //       if(response != null){
-            //         data.selection = response.selection; 
-            //         data.oldFilters = response.oldFiltersNb;
-            //         data.newFilters = response.newFiltersNb;
-            //         edges.push({ data })
-            //       } else {
-            //         console.log("One PROBLEM");
-            //         data.selection = []; 
-            //         data.oldFilters = 0;
-            //         data.newFilters = 0;
-            //       }
-            //       edges.push({ data })
-            //       let graph = {
-            //         nodes,
-            //         edges,
-            //       }
-            //       this.graphView.current.loadGraph(graph, 'breadthfirst')
-            //     }
-            // });
             let data = edge;
             edges.push({ data })
             graph = {
               nodes,
               edges,
             }
-            // this.graphView.current.loadGraph(graph, 'breadthfirst')
           }
         })
         this.graphView.current.loadGraph(graph, 'breadthfirst') // TO remove
@@ -208,13 +174,6 @@ class ScenarioGraph extends React.Component {
     );
   }
 }
-/*
-Accuracy (%) <i class="fas fa-bullseye"></i>
-Loss (%) <i class="fas fa-level-down-alt"></i>
-Size gain (%) <i class="fas fa-tachometer-alt"></i>
-Network size (N) <i class="fas fa-weight"></i>
-
-*/
 
 export default withTracker((params) => {
   Meteor.subscribe('instanceById', params.instanceId);
@@ -223,6 +182,5 @@ export default withTracker((params) => {
   return {
     instance: InstanceCollection.findOne(params.instanceId),
     scenarios: ScenarioCollection.find({ instanceId: params.instanceId }).fetch(),
-    ffs: FinetuningFilterCollection.find({ instanceId: params.instanceId }).fetch()
   }
 })(ScenarioGraph);

@@ -1,5 +1,5 @@
 import React from 'react';
-
+import { withTracker } from 'meteor/react-meteor-data';
 import Button from '@material-ui/core/Button';
 import Card from '@material-ui/core/Card';
 import CardActions from '@material-ui/core/CardActions';
@@ -8,7 +8,6 @@ import CardContent from '@material-ui/core/CardContent';
 import Divider from '@material-ui/core/Divider';
 import Grid from '@material-ui/core/Grid';
 import MenuItem from '@material-ui/core/MenuItem';
-import Select from '@material-ui/core/Select';
 import TextField from '@material-ui/core/TextField';
 
 import BlockIcon from '@material-ui/icons/Block';
@@ -18,28 +17,18 @@ export default class InstanceCreate extends React.Component {
   constructor (props) {
     super(props);
 
-    this.datasets = ['cifar10', 'fashion_mnist', 'mnist', 'cats_vs_dogs']
-    this.models = ['lenet5', 'lenet300-100', 'lenet_4_variant', 'vgg16', 'two-layer'];
-    this.optimizers = ['Adadelta', 'Adagrad', 'Adam', 'Adamax', 'Ftrl', 'Nadam', 'RMSprop', 'SGD']
-    this.losses = ['BinaryCrossentropy', 'CategoricalCrossentropy', 'CategoricalHinge', 'CosineSimilarity',
-      'Hinge', 'Huber', 'KLD', 'KLDivergence', 'LogCosh', 'Loss', 'MAE', 'MAPE', 'MSE', 'MSLE',
-      'MeanAbsoluteError', 'MeanAbsolutePercentageError', 'MeanSquaredError', 'MeanSquaredLogarithmicError',
-      'Poisson', 'Reduction', 'SparseCategoricalCrossentropy', 'SquaredHinge']
-    this.metrics = ['AUC', 'Accuracy', 'BinaryAccuracy', 'BinaryCrossentropy', 'CategoricalAccuracy',
-      'CategoricalCrossentropy', 'CategoricalHinge', 'CosineSimilarity', 'FalseNegatives', 'FalsePositives',
-      'Hinge', 'KLD', 'KLDivergence', 'LogCoshError', 'MAE', 'MAPE', 'MSE', 'MSLE', 'Mean', 'MeanAbsoluteError',
-      'MeanAbsolutePercentageError', 'MeanIoU', 'MeanRelativeError', 'MeanSquaredError',
-      'MeanSquaredLogarithmicError', 'MeanTensor', 'Metric', 'Poisson', 'Precision', 'PrecisionAtRecall',
-      'Recall', 'RecallAtPrecision', 'RootMeanSquaredError', 'SensitivityAtSpecificity',
-      'SparseCategoricalAccuracy', 'SparseCategoricalCrossentropy', 'SparseTopKCategoricalAccuracy',
-      'SpecificityAtSensitivity', 'SquaredHinge', 'Sum', 'TopKCategoricalAccuracy', 'TrueNegatives', 'TruePositives']
     this.state = {
+      datasets_list:[],
+      models_list:[],
+      optimizers_list:[],
+      losses_list:[],
+      metrics_list:[],
       name: '',
-      dataset: 'mnist',
-      model: 'lenet5',
-      optimizer: 'Adam',
-      loss: 'CategoricalCrossentropy',
-      metric: 'CategoricalAccuracy',
+      dataset: '',
+      model: '',
+      optimizer: '',
+      loss: '',
+      metric: '',
       epochs: 1, 
       batchSize: 128, 
       validationSplitRatio: 0.1,
@@ -56,6 +45,26 @@ export default class InstanceCreate extends React.Component {
     this.handleValidationSplitRatioChange = this.handleValidationSplitRatioChange.bind(this);
     this.handleCreate = this.handleCreate.bind(this);
     this.handleCancel = this.handleCancel.bind(this);
+  }
+  componentDidMount(){
+    Meteor.call('external.dataset_list', (error, response) => {
+      if (error){
+        console.log("Error retrieving dataset_list");
+      }
+      console.log("With tracker", response)
+      this.setState({datasets_list: response.datasets, 
+        models_list: response.models, 
+        optimizers_list: response.optimizers,
+        losses_list: response.losses,
+        metrics_list: response.metrics,
+
+        dataset: response.datasets[2],
+        model: response.models[0],
+        optimizer: response.optimizers[2],
+        loss: response.losses[1],
+        metric: response.metrics[4]
+      })
+    })
   }
   handleNameChange(e) {
     this.setState({ name: e.target.value })
@@ -95,6 +104,27 @@ export default class InstanceCreate extends React.Component {
   }
   //datasetName, optimizerName, lossName, metricName, epochs, batchSize, validationSplitRatio) {
   render() {
+    let datasets_list = [];
+    let models_list = [];
+    let optimizers_list = [];
+    let losses_list = [];
+    let metrics_list = [];
+    if (!!this.state.datasets_list){
+      datasets_list = this.state.datasets_list;
+    }
+    if (!!this.state.models_list){
+      models_list = this.state.models_list;
+    }
+    if (!!this.state.optimizers_list){
+      optimizers_list = this.state.optimizers_list;
+    }
+    if (!!this.state.losses_list){
+      losses_list = this.state.losses_list;
+    }
+    if (!!this.state.metrics_list){
+      metrics_list = this.state.metrics_list;
+    }
+    console.log("RENDER", this.props);
     return (
       <Card variant="outlined">
         <CardHeader title="Create a new Instance" />
@@ -122,7 +152,7 @@ export default class InstanceCreate extends React.Component {
                 helperText="Select your dataset"
                 variant="outlined"
               >
-                {this.datasets.map((item) =>
+                {datasets_list.map((item) =>
                   <MenuItem key={item} value={item}>
                     {item}
                   </MenuItem>
@@ -140,7 +170,7 @@ export default class InstanceCreate extends React.Component {
                 helperText="Select your base model"
                 variant="outlined"
               >
-                {this.models.map((item) =>
+                {models_list.map((item) =>
                   <MenuItem key={item} value={item}>
                     {item}
                   </MenuItem>
@@ -158,7 +188,7 @@ export default class InstanceCreate extends React.Component {
                 helperText="Select your optimizer"
                 variant="outlined"
               >
-                {this.optimizers.map((item) =>
+                {optimizers_list.map((item) =>
                   <MenuItem key={item} value={item}>
                     {item}
                   </MenuItem>
@@ -176,7 +206,7 @@ export default class InstanceCreate extends React.Component {
                 helperText="Select your loss function"
                 variant="outlined"
               >
-                {this.losses.map((item) =>
+                {losses_list.map((item) =>
                   <MenuItem key={item} value={item}>
                     {item}
                   </MenuItem>
@@ -194,7 +224,7 @@ export default class InstanceCreate extends React.Component {
                 helperText="Select your metric function"
                 variant="outlined"
               >
-                {this.metrics.map((item) =>
+                {metrics_list.map((item) =>
                   <MenuItem key={item} value={item}>
                     {item}
                   </MenuItem>
@@ -259,3 +289,15 @@ export default class InstanceCreate extends React.Component {
     )
   }
 }
+
+// export default withTracker(() => {
+//   Meteor.call('external.dataset_list', function(error, result){
+//     if (error){
+//       console.log("Error retrieving dataset_list");
+//     }
+//     console.log("With tracker", result)
+//     return {
+//       result,
+//     }
+//   })
+// })(InstanceCreate);

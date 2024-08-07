@@ -3,6 +3,16 @@ import { HTTP } from 'meteor/http';
 import { check } from 'meteor/check';
 
 Meteor.methods({
+  'external.dataset_list'(){
+    try {
+      let v = HTTP.call('GET', `${Meteor.settings.FLASK_URL}/params/get_lists`);
+      console.log('Dataset list', v.data.body)
+      return v.data.body;
+    } catch (e) {
+      throw new Meteor.Error('External server unavailable', e);
+    }
+  },
+
   'external.instance.remove'(instanceId) {
     check(instanceId, String);
 
@@ -39,9 +49,6 @@ Meteor.methods({
 
   'external.scenario.redoTesting'(scenarioId){
     check(scenarioId, String);
-    if (!this.userId) {
-      throw new Meteor.Error('Not authorized.');
-    }
 
     try {
       let v = HTTP.call('GET', `${Meteor.settings.FLASK_URL}/scenario/redoTesting/${scenarioId}`);

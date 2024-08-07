@@ -23,6 +23,16 @@ def hello_world():
     return 'Hello, World!'
 
 
+
+#########################################
+# Information                           #
+#########################################
+@app.route('/params/get_lists')
+def get_datasets_list():
+    return make_response(request_handler.get_lists())
+
+
+
 #########################################
 # Instance                              #
 #########################################
@@ -56,6 +66,7 @@ def scenario_redo_testing(scenarioId):
             "statusCode": 500,
             "body": False,
         })
+    
 
 if __name__ == '__main__':
     app.run(host=config['flask']['host'],

@@ -11,6 +11,7 @@ Overview of NetPrune:
 
 # Installation
 
+
 ## Server side
 
 0. In a first terminal: 
@@ -19,10 +20,23 @@ Overview of NetPrune:
 
 ```
 cd ./netprune_server
-sh install.sh
 ```
 
-2. Run the [_[netprune_server/run.sh](netprune_server/install.sh)_] script to start the Flask server. 
+2. Install the following requirements: 
+
+# Requirements
+
+```
+python 3.6.9
+pip-21.3.1
+tensorflow 2.2.0
+flask 1.1.2
+pymongo 3.11.3
+numpy 1.20
+keras-flops 0.1.2
+```
+
+3. Start the flask server: 
 
 ```
 sh run.sh

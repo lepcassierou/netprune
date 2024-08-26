@@ -581,4 +581,4 @@ class AbstractTrFt(ABC):
             horizontal_flip=True,  # randomly flip images
             vertical_flip=False)  # randomly flip images
         # (std, mean, and principal components if ZCA whitening is applied).
-        self.datagen.fit(self.x_train)
+        self.datagen.fit(self.x_train, augment=True, rounds=2)

@@ -82,8 +82,8 @@ class Instance extends React.Component {
 
   render() {
     let xs_scenario = 10;
+    let fullScreen = false;
     if (fullScreen) {
-      let fullScreen = false;
       xs_scenario = 12;
     }
     return (

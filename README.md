@@ -9,73 +9,30 @@ Overview of NetPrune:
 ![image](./Overview_of_NetPrune.png "NetPrune overview")
 
 
-# Installation
-
-
-## Server side
-
-0. In a first terminal: 
-
-1. Create a python virtual environment and install dependancies [_[netprune_server/install.sh](netprune_server/install.sh)_]: 
-
-```
-cd ./netprune_server
-```
-
-2. Install the following requirements: 
-
 # Requirements
 
+This prototype uses docker alongside docker-compose. 
+It has been tested with the version 24.0.2 of docker. 
+
+
+# Installation
+
+0. In a first terminal, at the root of the repository, run:
 ```
-python 3.6.9
-pip-21.3.1
-tensorflow 2.2.0
-flask 1.1.2
-pymongo 3.11.3
-numpy 1.20
-keras-flops 0.1.2
-```
-
-3. Start the flask server: 
-
-```
-sh run.sh
-```
-
-
-## Client side
-
-0. In a second terminal:  
-
-
-1. Install Meteor: 
-
-```
-cd ./netprune_client
-curl https://install.meteor.com/\?release\=2.16 | sh
-```
-
-2. Create a meteor project without replacing the source code and install dependancies [_[netprune_client/install.sh](netprune_client/install.sh)_]: 
-
-```
-sh install.sh
-```
-
-3. Run the script to start meteor [_[netprune_client/run.sh](netprune_client/run.sh)_]: 
-
-```
-sh run.sh
-```
+docker-compose up
+``` 
+This will start both the server and the client in separate containers. 
 
 
 # Usage
 
-When the installation is finalized, NetPrune should be running in a browser at:
+After the whole installation is done, a message should indicate that NetPrune is running in a browser at:
 
 ```
-http://localhost:3000/
+client_1    | => App running at: http://localhost:3000/
 ```
-You should then find an empty list of instances, with a button to create a new one. This button will enable you to train a neural network, given one of the possible architectures (you can implement your own with your own dataset of images). 
+
+In your browser, you should then find an empty list of instances, with a button to create a new one. This button will enable you to train a neural network, given one of the possible architectures (you can implement your own with your own dataset of images). 
 You can setup a set of hyper-parameters (the most specific ones can be controlled directly in the code: ``./netprune_server/params/``)
 
 ![image](./NetPrune_create_instance.png "NetPrune welcome")
@@ -90,7 +47,10 @@ To visualize the images of the chosen dataset when clicking on the confusion mat
 ./netprune_client/public/datasets/<dataset_name>/
 ```
 
-> ⚠️ **_NB:_** This implementation is a proof of concept. It may contain bugs. 
+> ⚠️ **_NB:_** This implementation is a proof of concept. It may contain bugs and some visual problems, depending on your screen resolution. 
+
+> ⚠️ **_NB:_** Because of docker, this implementation does not support training models on a GPU yet. Still, you may be able to train them on a GPU with a manual installation of the dependencies indicated in the server-side requirements and on the [install.sh] and [run.sh] scripts that are left in both the server-side and the client-side. 
+Such an installation is left to your discretion. 
 
 
 ## Reference
